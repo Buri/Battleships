@@ -7,27 +7,22 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="be.buri.battleships.StartActivity">
+    tools:context=".Activities.PlayerListActivity">
 
-    <Button
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Host game"
-        android:id="@+id/button"
+        android:text="Player list"
+        android:id="@+id/textView"
         android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:textSize="40sp"
-        android:layout_alignParentEnd="true"
-        android:onClick="hostGame"
-        />
+        android:layout_alignParentStart="true" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Connect to host"
-        android:id="@+id/button2"
-        android:layout_below="@+id/button"
-        android:layout_alignParentStart="true"
-        android:textSize="40sp"
-        android:layout_alignEnd="@+id/button" />
+        android:text="Start!"
+        android:onClick="launchGame"
+        android:id="@+id/button3"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true" />
 </RelativeLayout>
