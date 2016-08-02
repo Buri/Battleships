@@ -1,17 +1,30 @@
 package be.buri.battleships.Activities;
 
+import android.graphics.Color;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
 import be.buri.battleships.R;
 
-public class MapActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnCameraChangeListener {
+
+    public static final Double LON_MIN = 7.34d;
+    public static final Double LON_MAX = 13.5d;
+    public static final Double LAT_MIN = 53.5d;
+    public static final Double LAT_MAX = 58.5d;
 
     private GoogleMap mMap;
 
@@ -40,8 +53,35 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        LatLng sydney = new LatLng(55, 10);
+        Marker marker = mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+
+
+        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.ship2);
+        marker.setIcon(descriptor);
+        marker.setDraggable(true);
+        marker.setFlat(true);
+        mMap.addCircle(new CircleOptions().center(sydney).radius(5000).clickable(false).fillColor(Color.RED).strokeWidth(0));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 8));
+        mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        mMap.setOnCameraChangeListener(this);
+        mMap.getUiSettings().setRotateGesturesEnabled(false);
+    }
+
+    @Override
+    public void onCameraChange(CameraPosition cameraPosition) {
+        if (cameraPosition.target.longitude < LON_MIN) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(cameraPosition.target.latitude, LON_MIN)));
+        }
+        if (cameraPosition.target.longitude > LON_MAX) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(cameraPosition.target.latitude, LON_MAX)));
+        }
+        if (cameraPosition.target.latitude > LAT_MAX) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(LAT_MAX, cameraPosition.target.longitude)));
+        }
+        if (cameraPosition.target.latitude < LAT_MIN) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(LAT_MIN, cameraPosition.target.longitude)));
+        }
+
     }
 }
