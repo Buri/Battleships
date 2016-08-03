@@ -12,6 +12,9 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import be.buri.battleships.Engine.Command;
+import be.buri.battleships.Engine.Const;
+
 /**
  * Created by buri on 1.8.16.
  */
@@ -51,7 +54,9 @@ public class ClientService extends EngineService {
                         PrintWriter out = new PrintWriter(new BufferedWriter(
                         new OutputStreamWriter(socket.getOutputStream())),
                         true);
-                        out.println("From client, hello!");
+                        Command c = new Command();
+                        c.name = Const.CMD_LIST_PLAYERS;
+                        out.println(c);
 
                         //OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream());
                         //writer.write("From client, hello!");

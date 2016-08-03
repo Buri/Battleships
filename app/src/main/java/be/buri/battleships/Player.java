@@ -10,7 +10,7 @@ import be.buri.battleships.Units.Unit;
 public class Player {
     private boolean connected = false;
     private String name;
-    private Vector<Unit> units;
+    private Vector<Unit> units = new Vector<Unit>();
 
     public Player(String name) {
         this.name = name;
@@ -29,5 +29,9 @@ public class Player {
     public boolean hasUnit(Unit unit)
     {
         return units.contains(unit);
+    }
+
+    public String getName() {
+        return name;
     }
 }
