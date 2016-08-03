@@ -6,6 +6,8 @@ import be.buri.battleships.Player;
 
 /**
  * Created by buri on 1.8.16.
+ *
+ * Abstract class: a harbour / a ship
  */
 public class Unit {
     protected Point position = new Point(0, 0);

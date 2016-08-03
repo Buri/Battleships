@@ -1,5 +1,7 @@
 package be.buri.battleships.Activities;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -56,16 +58,19 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         LatLng sydney = new LatLng(55, 10);
         Marker marker = mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
 
-
-        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.ship2);
+        // a picture of a ship
+        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.ship3);
         marker.setIcon(descriptor);
         marker.setDraggable(true);
         marker.setFlat(true);
         mMap.addCircle(new CircleOptions().center(sydney).radius(5000).clickable(false).fillColor(Color.RED).strokeWidth(0));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 8));
         mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        // limit the selected area
         mMap.setOnCameraChangeListener(this);
         mMap.getUiSettings().setRotateGesturesEnabled(false);
+        mMap.getUiSettings().setZoomControlsEnabled(false);
+        mMap.getUiSettings().setZoomGesturesEnabled(false);
     }
 
     @Override
