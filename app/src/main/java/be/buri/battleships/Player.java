@@ -1,5 +1,6 @@
 package be.buri.battleships;
 
+import java.util.ArrayList;
 import java.util.Vector;
 
 import be.buri.battleships.Units.Unit;
@@ -10,7 +11,7 @@ import be.buri.battleships.Units.Unit;
 public class Player {
     private boolean connected = false;
     private String name;
-    private Vector<Unit> units = new Vector<Unit>();
+    private ArrayList<Unit> units = new ArrayList<Unit>();
 
     public Player(String name) {
         this.name = name;

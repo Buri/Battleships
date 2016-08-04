@@ -1,6 +1,9 @@
 package be.buri.battleships.Services;
 
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -9,8 +12,13 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -38,7 +46,8 @@ public class ServerService extends EngineService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        if (running) return;;
+        if (running) return;
+        ;
 
         this.running = true;
         if (null == this.serverThread) {
@@ -52,7 +61,7 @@ public class ServerService extends EngineService {
     }
 
     class GameThread implements Runnable {
-        ServerService service;
+        final ServerService service;
 
         public GameThread(ServerService service) {
             this.service = service;
@@ -70,19 +79,13 @@ public class ServerService extends EngineService {
                 // Begin loop code here
                 while (!this.service.incommingCommands.isEmpty()) {
                     Command command = (Command) this.service.incommingCommands.poll();
-                    Log.d("BS.Game.handleCommand", command.name);
+                    Log.d("BS.Server.handleCommand", command.name);
                     switch (command.name) {
                         case Const.CMD_LIST_PLAYERS:
-                            try {
-                                Command response = new Command();
-                                response.name = Const.CMD_LIST_PLAYERS;
-                                for (Player player : service.players) {
-                                    response.arguments.add(player.getName());
-                                }
-                                Net.respond(command, response);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            handleListPlayers(command);
+                            break;
+                        case Const.CMD_IS_WARSHIPS:
+                            handleIsWarships(command);
                             break;
                     }
                 }
@@ -102,7 +105,7 @@ public class ServerService extends EngineService {
     }
 
     class ServerThread implements Runnable {
-        ServerService service;
+        final ServerService service;
 
         public ServerThread(ServerService service) {
             this.service = service;
@@ -121,7 +124,7 @@ public class ServerService extends EngineService {
                     socket = serverSocket.accept();
                     CommunicationThread commThread = new CommunicationThread(socket, service);
                     new Thread(commThread).start();
-                    synchronized (service.players) {
+                    synchronized (service) {
                         service.players.add(new Player("Player " + (++counter)));
                     }
                 } catch (IOException e) {
@@ -132,7 +135,7 @@ public class ServerService extends EngineService {
     }
 
     class CommunicationThread implements Runnable {
-        ServerService service;
+        final ServerService service;
         private Socket clientSocket;
 
         public CommunicationThread(Socket clientSocket, ServerService serverService) {
@@ -145,16 +148,56 @@ public class ServerService extends EngineService {
                 try {
                     Command command = Net.recieve(clientSocket.getInputStream());
                     command.socket = this.clientSocket;
-                    synchronized (service.incommingCommands) {
+                    synchronized (service) {
                         service.incommingCommands.add(command);
                     }
-
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    private void handleListPlayers(Command command) {
+        try {
+            Command response = new Command();
+            response.name = Const.CMD_LIST_PLAYERS;
+            for (Player player : this.players) {
+                response.arguments.add(player.getName());
+            }
+            Net.respond(command, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleIsWarships(Command command) {
+        try {
+            Command response = new Command();
+            response.name = Const.CMD_IS_WARSHIPS_POSITIVE;
+            PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            response.arguments.add(pInfo.versionName);
+            Log.d("BS.Server.isWarships", pInfo.versionName);
+            String hostname = getHostname();
+            response.arguments.add(hostname);
+            Log.d("BS.Server.isWarships", hostname);
+            Net.respond(command, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getHostname() {
+        try {
+            Method getString = Build.class.getDeclaredMethod("getString", String.class);
+            getString.setAccessible(true);
+            return getString.invoke(null, "net.hostname").toString();
+        } catch (Exception ex) {
+            return "localhost";
         }
     }
 }
