@@ -11,6 +11,7 @@ import be.buri.battleships.Units.Unit;
 public class Player {
     private boolean connected = false;
     private String name;
+    private int id;
     private ArrayList<Unit> units = new ArrayList<Unit>();
 
     public Player(String name) {
@@ -34,5 +35,9 @@ public class Player {
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

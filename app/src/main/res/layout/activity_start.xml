@@ -10,7 +10,7 @@
     tools:context="be.buri.battleships.StartActivity">
 
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Host game"
         android:id="@+id/button"
@@ -22,7 +22,7 @@
         />
 
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Connect to host"
         android:onClick="joinGame"

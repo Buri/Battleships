@@ -14,7 +14,7 @@
         android:inputType="textPersonName"
         android:text="Your Name"
         android:ems="10"
-        android:id="@+id/editText"
+        android:id="@+id/editTextPlayerName"
         android:textSize="20dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
@@ -28,7 +28,7 @@
         android:textSize="20dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/editText" />
+        android:layout_below="@+id/editTextPlayerName" />
 
     <Button
         android:layout_width="wrap_content"

@@ -1,11 +1,18 @@
 package be.buri.battleships.Activities;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
@@ -13,12 +20,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import be.buri.battleships.R;
+import be.buri.battleships.Services.ClientService;
 import be.buri.battleships.Units.Harbor;
 
 public class HarborListActivity extends AppCompatActivity {
 
     private RadioGroup harborsRadioGroup;
-    public ArrayList<Harbor> harborsArray;
+    ClientService clientService;
+    private boolean mBound = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,36 +35,59 @@ public class HarborListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_harbor_list);
         // get the radio group of harbors
         harborsRadioGroup = (RadioGroup) findViewById(R.id.harborsRadioGroup);
+        Intent intent = new Intent(this, ClientService.class);
+        intent.putExtra(ClientService.INTENT_TYPE, -1);
+        startService(intent);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
         // hide the Next button
         Button nextButton = (Button) findViewById(R.id.nextButton);
         nextButton.setVisibility(View.GONE);
 
-        // initialize the harbors array
-        harborsArray = new ArrayList<Harbor>() {
-            {
-                add(new Harbor("Aarhus", 56.156998, 10.213376));
-                add(new Harbor("Aalborg", 57.053255, 9.916739));
-                add(new Harbor("Copenhagen", 55.676087, 12.587616));
-                add(new Harbor("Esbjerg", 55.463119, 8.440151));
-                add(new Harbor("Frederikshavn", 57.439275, 10.544074));
-                add(new Harbor("Hanstholm", 57.120962, 8.598468));
-                add(new Harbor("Hirtshals", 57.594133, 9.969568));
-                add(new Harbor("Grenaa", 56.408487, 10.922023));
-                add(new Harbor("Skagen", 57.718120, 10.588968));
-            }
-        };
-        // make harbors as a radio button
-        for (Harbor item : harborsArray) {
-            makeRadioButton(item.getName());
-        }
 
         //ClientService service = (ClientService);
     }
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (mBound) {
+            unbindService(mConnection);
+            mBound = false;
+        }
+    }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            ClientService.ClientBinder binder = (ClientService.ClientBinder) iBinder;
+            clientService = binder.getService();
+            mBound = true;
+
+            // make harbors as a radio button
+            for (Harbor item : clientService.harbors) {
+                makeRadioButton(item.getName());
+            }
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mBound = false;
+        }
+    };
 
     public void launchPlayerList(View view)
     {
-        // TODO save the player name and the selected harbor
+        // save the player name and the selected harbor
+        Intent setPlayer = new Intent(this, ClientService.class);
+        EditText playerName = (EditText) findViewById(R.id.editTextPlayerName);
+        RadioButton selectedHarbor = (RadioButton) findViewById(harborsRadioGroup.getCheckedRadioButtonId());
+        setPlayer.putExtra(ClientService.INTENT_TYPE, ClientService.SET_PLAYER_NAME);
+        setPlayer.putExtra("Player name", playerName.getText().toString());
+        setPlayer.putExtra("Harbor name", selectedHarbor.getText().toString());
+        startService(setPlayer);
+
         Intent showPlayerList = new Intent(this, PlayerListActivity.class);
         startActivity(showPlayerList);
     }

@@ -14,9 +14,13 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Vector;
+
 import be.buri.battleships.Engine.Command;
 import be.buri.battleships.Engine.Const;
 import be.buri.battleships.Network.Net;
+import be.buri.battleships.Player;
+import be.buri.battleships.Units.Harbor;
 
 /**
  * Created by buri on 1.8.16.
@@ -25,12 +29,15 @@ public class ClientService extends EngineService {
     public static boolean running = false;
     public final static int CONNECT_TO_HOST = 0;
     public final static int FIND_SERVERS = 1;
+    public final static int SET_PLAYER_NAME = 2;
     public final static String INTENT_TYPE = "IntentType";
     public final static String HOST_NAME = "HostName";
     private final IBinder mBinder = new ClientBinder();
+    private final Player currentPlayer;
     private Socket socket = null;
     private boolean working = false;
     public ArrayList<ServerInfo> localNetworkServers = new ArrayList<>();
+    public Vector<Harbor> harbors = Const.getHarbors();
 
     public class ClientBinder extends Binder {
         public ClientService getService() {
@@ -41,6 +48,8 @@ public class ClientService extends EngineService {
     public ClientService() {
         super("ClientService");
         running = true;
+        currentPlayer = new Player("Your Name");
+
     }
 
     @Nullable
@@ -94,6 +103,15 @@ public class ClientService extends EngineService {
                 break;
             case FIND_SERVERS:
                 getServersOnLocalNetwork();
+                break;
+            case SET_PLAYER_NAME:
+                currentPlayer.setName(intent.getStringExtra("Player name"));
+                for (Harbor item : harbors) {
+                    if (item.getName().equals(intent.getStringExtra("Harbor name")) ) {
+                        item.setPlayer(currentPlayer);
+                        break;
+                    }
+                }
                 break;
         }
         working = false;
