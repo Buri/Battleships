@@ -7,18 +7,24 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.Socket;
 
 import be.buri.battleships.Engine.Command;
 import be.buri.battleships.Engine.Const;
+import be.buri.battleships.Network.Net;
 
 /**
  * Created by buri on 1.8.16.
  */
 public class ClientService extends EngineService {
+    public static boolean running = false;
     public final static int CONNECT_TO_HOST = 0;
     public final static String INTENT_TYPE = "IntentType";
     public final static String HOST_NAME = "HostName";
@@ -33,6 +39,7 @@ public class ClientService extends EngineService {
 
     public ClientService() {
         super("ClientService");
+        running = true;
     }
 
     @Nullable
@@ -46,23 +53,32 @@ public class ClientService extends EngineService {
     protected void onHandleIntent(Intent intent) {
         switch (intent.getIntExtra(INTENT_TYPE, -1)) {
             case CONNECT_TO_HOST:
+                for (int i = 0; i < 10; i++) {
+                    try {
+                        socket = new Socket(intent.getStringExtra(HOST_NAME), ServerService.SERVERPORT);
+                        break;
+                    } catch (ConnectException e) {
+                        Log.i("BS.Net.connect", "Connection refused (" + i + ")");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 try {
-                    socket = new Socket(intent.getStringExtra(HOST_NAME), ServerService.SERVERPORT);
-                    System.out.println("Connected: " + Boolean.toString(socket.isConnected()));
                     if (socket.isConnected()) {
-                        System.out.println("Connected");
-                        PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(socket.getOutputStream())),
-                        true);
+                        Log.d("Net", "Client connected");
                         Command c = new Command();
                         c.name = Const.CMD_LIST_PLAYERS;
-                        out.println(c);
-
-                        //OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream());
-                        //writer.write("From client, hello!");
-                        //writer.flush();
+                        c.arguments.add(3);
+                        Net.send(socket.getOutputStream(), c);
+                        Command response = Net.recieve(socket.getInputStream());
+                        for (Object name : response.arguments) {
+                            Log.d("BS.Client", name.toString());
+                        }
+                        Net.send(socket.getOutputStream(), c);
                     }
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
                 break;

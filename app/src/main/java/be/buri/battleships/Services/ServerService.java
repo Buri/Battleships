@@ -1,10 +1,14 @@
 package be.buri.battleships.Services;
 
 import android.content.Intent;
+import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Queue;
@@ -13,6 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import be.buri.battleships.Engine.Command;
 import be.buri.battleships.Engine.Const;
+import be.buri.battleships.Network.Net;
 import be.buri.battleships.Player;
 
 /**
@@ -24,6 +29,7 @@ public class ServerService extends EngineService {
     private ConcurrentLinkedQueue incommingCommands = new ConcurrentLinkedQueue();
     public static final int SERVERPORT = 6000;
     public static final int FPS = 3;
+    public static boolean running = false;
 
 
     public ServerService() {
@@ -32,6 +38,9 @@ public class ServerService extends EngineService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        if (running) return;;
+
+        this.running = true;
         if (null == this.serverThread) {
             this.serverThread = new Thread(new ServerThread(this));
             this.serverThread.start();
@@ -49,6 +58,10 @@ public class ServerService extends EngineService {
             this.service = service;
         }
 
+        private void respond(Command command, Object response) {
+
+        }
+
         @Override
         public void run() {
             while (true) {
@@ -57,7 +70,7 @@ public class ServerService extends EngineService {
                 // Begin loop code here
                 while (!this.service.incommingCommands.isEmpty()) {
                     Command command = (Command) this.service.incommingCommands.poll();
-                    System.out.println("Command: " + command);
+                    Log.d("BS.Game.handleCommand", command.name);
                     switch (command.name) {
                         case Const.CMD_LIST_PLAYERS:
                             try {
@@ -66,8 +79,7 @@ public class ServerService extends EngineService {
                                 for (Player player : service.players) {
                                     response.arguments.add(player.getName());
                                 }
-                                command.socket.getOutputStream().write(response.toString().getBytes());
-                                command.socket.getOutputStream().flush();
+                                Net.respond(command, response);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -122,33 +134,24 @@ public class ServerService extends EngineService {
     class CommunicationThread implements Runnable {
         ServerService service;
         private Socket clientSocket;
-        private BufferedReader input;
 
         public CommunicationThread(Socket clientSocket, ServerService serverService) {
             this.service = serverService;
             this.clientSocket = clientSocket;
-            try {
-                this.input = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    String read = input.readLine();
-                    if (null == read) {
-                        this.clientSocket.close();
-                        return;
-                    }
-                    Command command = Command.fromString(read);
+                    Command command = Net.recieve(clientSocket.getInputStream());
                     command.socket = this.clientSocket;
                     synchronized (service.incommingCommands) {
                         service.incommingCommands.add(command);
                     }
 
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
             }
