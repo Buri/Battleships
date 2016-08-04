@@ -2,4 +2,6 @@
     <string name="app_name">Battleships</string>
     <string name="title_activity_map">Map</string>
     <string name="title_activity_select_server">Select server, please</string>
+    <string name="refresh_available_servers">Refresh available servers</string>
+    <string name="available_servers">Available servers</string>
 </resources>

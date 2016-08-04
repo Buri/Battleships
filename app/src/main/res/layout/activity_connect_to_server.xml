@@ -12,27 +12,17 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Search for new devices"
-        android:onClick="onClickDeviceSearch"/>
+        android:text="@string/refresh_available_servers"
+        android:onClick="onClickRefreshServers"/>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Paired devices"
-        android:textSize="20sp"/>
+        android:text="@string/available_servers"
+        android:textSize="22sp"/>
     <ListView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/pairedDevicesList"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="New devices"
-        android:textSize="20sp"/>
-    <ListView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/newDevicesList"/>
+        android:id="@+id/availableServersList"/>
 
 </LinearLayout>
