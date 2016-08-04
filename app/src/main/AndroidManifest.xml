@@ -27,6 +27,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".Activities.PlayerListActivity" />
+        <activity android:name=".Activities.HarborListActivity" />
 
         <service android:name=".Services.ClientService" />
         <service android:name=".Services.ServerService" />
