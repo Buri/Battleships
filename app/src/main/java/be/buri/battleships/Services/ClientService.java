@@ -155,6 +155,9 @@ public class ClientService extends EngineService {
         }
         Intent intent = new Intent(Const.BROADCAST_UPDATE_PLAYER_LIST);
         intent.setType("text/plain");
+        for (Harbor harbor : harbors) {
+            Log.d("BS.Client.hListPlayer", harbor.getName() + " " + (harbor.getPlayer() != null ? harbor.getPlayer().getName() : "---"));
+        }
         sendBroadcast(intent);
     }
 

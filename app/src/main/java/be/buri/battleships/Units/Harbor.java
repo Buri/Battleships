@@ -11,6 +11,8 @@ public class Harbor extends Unit {
     public Harbor(String name, double gpsN, double gpsE) {
         super();
         this.name = name;
+        this.gpsE = gpsE;
+        this.gpsN = gpsN;
     }
 
     public String getName() {
@@ -27,5 +29,16 @@ public class Harbor extends Unit {
         if (null != player && player.getHarbor() != this) {
             player.setHarbor(this);
         }
+    }
+
+    @Override
+    public String toString() {
+        String s = name + " (" + gpsN + ", " + gpsE;
+        if (player != null) {
+            s += ", " + player.getName();
+        }
+        s += ")";
+
+        return s;
     }
 }

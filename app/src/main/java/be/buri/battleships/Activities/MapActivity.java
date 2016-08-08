@@ -109,6 +109,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             mBound = true;
             for (Harbor harbor : clientService.harbors) {
                 if (harbor.getPlayer() != null) {
+                    Log.d("BS.Map.serCon", harbor.toString());
                     currentHarbor = harbor;
                     // Add a marker in the players' harbor
                     LatLng harborPosition = new LatLng(harbor.getGpsN(), harbor.getGpsE());
