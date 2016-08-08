@@ -20,9 +20,7 @@ public class Unit implements Serializable {
     protected double gpsE;
 
     public Unit() {
-        id = ++unitCount;
-        this.gpsN = gpsN;
-        this.gpsE = gpsE;
+        id = unitCount++;
     }
 
 
@@ -56,5 +54,11 @@ public class Unit implements Serializable {
 
     public int getId() {
         return id;
+    }
+
+    public void update(Unit u) {
+        this.hitpoints = u.hitpoints;
+        this.gpsE = u.gpsE;
+        this.gpsN = u.gpsN;
     }
 }

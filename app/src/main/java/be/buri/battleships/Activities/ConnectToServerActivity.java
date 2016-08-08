@@ -1,8 +1,10 @@
 package be.buri.battleships.Activities;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -17,13 +19,35 @@ import android.widget.Button;
 import android.widget.ListView;
 
 
+import be.buri.battleships.Network.Helper;
 import be.buri.battleships.R;
 import be.buri.battleships.Services.ClientService;
 
-public class ConnectToServer extends AppCompatActivity {
+public class ConnectToServerActivity extends AppCompatActivity {
     ClientService clientService;
     private boolean mBound = false;
     private ArrayAdapter<String> servers;
+
+
+    private BroadcastReceiver mReciever = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Intent showHarborList = new Intent(ConnectToServerActivity.this, HarborListActivity.class);
+            startActivity(showHarborList);
+        }
+    };
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mReciever);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mReciever, new IntentFilter(ClientService.INTENT_SELECT_HARBOR));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +56,7 @@ public class ConnectToServer extends AppCompatActivity {
         setContentView(R.layout.activity_connect_to_server);
 
         Intent intent = new Intent(this, ClientService.class);
-        intent.putExtra(ClientService.INTENT_TYPE, ClientService.FIND_SERVERS);
+        intent.putExtra(ClientService.INTENT_TYPE, -1);
         startService(intent);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
@@ -54,7 +78,7 @@ public class ConnectToServer extends AppCompatActivity {
             clientService = binder.getService();
             mBound = true;
 
-            servers = new ArrayAdapter<String>(ConnectToServer.this, R.layout.device_name);
+            servers = new ArrayAdapter<String>(ConnectToServerActivity.this, R.layout.device_name);
             ListView availableServersList = (ListView) findViewById(R.id.availableServersList);
             availableServersList.setAdapter(servers);
             fillServerList();
@@ -103,8 +127,13 @@ public class ConnectToServer extends AppCompatActivity {
         fillServerList();
     }
 
+    public void onClickDirectConnect(View view) {
+        Intent intent = new Intent(this, DirectConnectActivity.class);
+        startActivity(intent);
+    }
+
     public void onClickSelectServer(View view) {
         AppCompatTextView view1 = (AppCompatTextView)view;
-        Log.i("BS.SelectServer", view1.getText().toString().split("\n")[1]);
+        Helper.connectToServer(this, view1.getText().toString().split("\n")[1]);
     }
 }

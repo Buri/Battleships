@@ -4,6 +4,9 @@ import android.app.IntentService;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -12,6 +15,7 @@ import be.buri.battleships.Engine.Const;
 import be.buri.battleships.Network.Net;
 import be.buri.battleships.Player;
 import be.buri.battleships.Units.Harbor;
+import be.buri.battleships.Units.Unit;
 
 /**
  * Created by buri on 1.8.16.
@@ -24,7 +28,7 @@ public abstract class EngineService extends IntentService {
     public static final int FPS = 3;
     public static Vector<Player> players = new Vector<Player>(2);
     public static Vector<Harbor> harbors = Const.getHarbors();
-
+    public static Map<Integer, Unit> units = Collections.synchronizedMap(new HashMap<Integer, Unit>(16));
 
     public EngineService(String name) {
         super(name);

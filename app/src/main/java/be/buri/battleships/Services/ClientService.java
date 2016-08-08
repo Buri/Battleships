@@ -18,11 +18,14 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import be.buri.battleships.Activities.HarborListActivity;
 import be.buri.battleships.Engine.Command;
 import be.buri.battleships.Engine.Const;
+import be.buri.battleships.Network.Helper;
 import be.buri.battleships.Network.Net;
 import be.buri.battleships.Player;
 import be.buri.battleships.Units.Harbor;
+import be.buri.battleships.Units.Unit;
 
 /**
  * Created by buri on 1.8.16.
@@ -32,11 +35,13 @@ public class ClientService extends EngineService {
     public final static int FIND_SERVERS = 1;
     public final static int SET_PLAYER_NAME = 2;
     public final static int GET_PLAYER_LIST = 3;
+    public final static int REQUEST_NEW_UNIT = 4;
     public final static String INTENT_TYPE = "IntentType";
     public final static String HOST_NAME = "HostName";
+    public final static String INTENT_SELECT_HARBOR = "SelectHarbor";
     private final IBinder mBinder = new ClientBinder();
     private static Player currentPlayer;
-    private static Socket socket = null;
+    private static Socket socket = new Socket();
     private boolean working = false;
     public static ArrayList<ServerInfo> localNetworkServers = new ArrayList<>();
     protected static ConcurrentLinkedQueue incomingCommands = new ConcurrentLinkedQueue();
@@ -69,12 +74,13 @@ public class ClientService extends EngineService {
             gameThread.start();
         }
         Log.d("BS.Client.intent", Integer.toString(intent.getIntExtra(INTENT_TYPE, -1)));
+        Command command = new Command();
         switch (intent.getIntExtra(INTENT_TYPE, -1)) {
             case CONNECT_TO_HOST:
                 String hostname = intent.getStringExtra(HOST_NAME);
                 for (int i = 0; i < 10; i++) {
                     try {
-                        socket = new Socket(hostname, ServerService.SERVERPORT);
+                        socket.connect(new InetSocketAddress(hostname, ServerService.SERVERPORT));
                         break;
                     } catch (ConnectException e) {
                         Log.i("BS.Net.connect", "Connection refused (" + hostname + ")");
@@ -90,6 +96,7 @@ public class ClientService extends EngineService {
                         Command serverCheck = new Command();
                         serverCheck.name = Const.CMD_IS_WARSHIPS;
                         Net.send(socket.getOutputStream(), serverCheck);
+                        sendBroadcast(new Intent(INTENT_SELECT_HARBOR));
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -106,7 +113,6 @@ public class ClientService extends EngineService {
                         break;
                     }
                 }
-                Command command = new Command();
                 command.name = Const.CMD_SET_PLAYER_NAME;
                 command.arguments.add(currentPlayer.getName());
                 command.arguments.add(currentPlayer.getHarbor().getName());
@@ -117,10 +123,18 @@ public class ClientService extends EngineService {
                 }
                 break;
             case GET_PLAYER_LIST:
-                Command c = new Command();
-                c.name = Const.CMD_LIST_PLAYERS;
+                command.name = Const.CMD_LIST_PLAYERS;
                 try {
-                    Net.send(socket.getOutputStream(), c);
+                    Net.send(socket.getOutputStream(), command);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case REQUEST_NEW_UNIT:
+                command.name = Const.CMD_REQUEST_NEW_UNIT;
+                command.arguments.add("Ship");
+                try {
+                    Net.send(socket.getOutputStream(), command);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -200,15 +214,6 @@ public class ClientService extends EngineService {
         localNetworkServers.add(si);
     }
 
-    public Vector<Player> getPlayers() {
-        Intent intent = new Intent(this, ClientService.class);
-        intent.putExtra(ClientService.INTENT_TYPE, ClientService.GET_PLAYER_LIST);
-        startService(intent);
-
-        return this.players;
-    }
-
-
     public boolean isWorking() {
         return working;
     }
@@ -237,6 +242,29 @@ public class ClientService extends EngineService {
                 si.ip = command.socket.getRemoteSocketAddress().toString();
                 localNetworkServers.add(si);
                 Log.d("BS.Client.findServers", si.name + "(" + si.ip + "): " + si.version);
+                break;
+            case Const.CMD_ADD_UNIT: {
+                Unit unit = (Unit) command.arguments.get(0);
+                int playerId = (int) command.arguments.get(1);
+                for (Player player : players) {
+                    if (player.getId() == playerId) {
+                        unit.setPlayer(player);
+                        break;
+                    }
+                }
+                this.units.put(unit.getId(), unit);
+            }
+            break;
+            case Const.CMD_UPDATE_UNIT: {
+                Unit unit = (Unit) command.arguments.get(0);
+                this.units.get(unit.getId()).update(unit);
+            }
+            break;
+            case Const.CMD_REMOVE_UNIT: {
+                Unit unit = (Unit) command.arguments.get(0);
+                this.units.remove(unit.getId());
+            }
+            break;
         }
     }
 
@@ -253,5 +281,13 @@ public class ClientService extends EngineService {
     @Override
     public void setGameThread(Thread t) {
         gameThread = t;
+    }
+
+    public void requestNewUnit(String unit)
+    {
+        Intent intent = new Intent(this, this.getClass());
+        intent.putExtra(INTENT_TYPE, REQUEST_NEW_UNIT);
+        intent.putExtra("UNIT_TYPE", unit);
+        startService(intent);
     }
 }

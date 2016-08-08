@@ -201,7 +201,9 @@ public class ServerService extends EngineService {
         Command command = new Command();
         for (Player player : players) {
             command.socket = playerSocketMap.get(player);
-            handleListPlayers(command);
+            if (null != command.socket && !command.socket.isClosed()) {
+                handleListPlayers(command);
+            }
         }
     }
 }

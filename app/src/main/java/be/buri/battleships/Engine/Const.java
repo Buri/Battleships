@@ -13,6 +13,11 @@ public class Const {
     public final static String CMD_IS_WARSHIPS = "GAME_IDENTIFY";
     public final static String CMD_IS_WARSHIPS_POSITIVE = "GAME_IDENTIFY_YES";
     public final static String CMD_SET_PLAYER_NAME = "SET_PLAYER_NAME";
+    public final static String CMD_ADD_UNIT = "ADD_UNIT";
+    public final static String CMD_UPDATE_UNIT = "UPDATE_UNIT";
+    public final static String CMD_REMOVE_UNIT = "REMOVE_UNIT";
+    public final static String CMD_REQUEST_NEW_UNIT = "REQUEST_NEW_UNIT";
+
 
     public static final String BROADCAST_UPDATE_PLAYER_LIST = "BROADCAST_UPDATE_PLAYER_LIST";
 

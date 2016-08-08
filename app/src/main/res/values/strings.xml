@@ -4,4 +4,7 @@
     <string name="title_activity_select_server">Select server, please</string>
     <string name="refresh_available_servers">Refresh available servers</string>
     <string name="available_servers">Available servers</string>
+    <string name="direct_connect">Direct connect</string>
+    <string name="enter_server_name">Enter server name</string>
+    <string name="connect">Connect</string>
 </resources>

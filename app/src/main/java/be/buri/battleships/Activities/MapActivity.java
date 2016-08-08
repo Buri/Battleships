@@ -34,7 +34,7 @@ import be.buri.battleships.R;
 import be.buri.battleships.Services.ClientService;
 import be.buri.battleships.Units.Harbor;
 
-public class MapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnCameraChangeListener {
+public class MapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnCameraChangeListener, GoogleMap.OnMarkerDragListener {
 
     public static final Double LON_MIN = 7.34d;
     public static final Double LON_MAX = 13.5d;
@@ -78,6 +78,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
         // limit the selected area
         mMap.setOnCameraChangeListener(this);
+        mMap.setOnMarkerDragListener(this);
         mMap.getUiSettings().setRotateGesturesEnabled(false);
         mMap.getUiSettings().setZoomControlsEnabled(false);
         mMap.getUiSettings().setZoomGesturesEnabled(false);
@@ -131,23 +132,39 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     };
 
     public void makeShip(View view) {
-        Integer time = 10;
+        /*Integer time = 10;
+        TextView timerNewShip = (TextView) findViewById(R.id.timerNewShip);
         while(time > 0) {
-            TextView timerNewShip = (TextView) findViewById(R.id.timerNewShip);
             timerNewShip.setText("New ship for "+ Integer.toString(time));
             time -= 1;
             try {
-                wait(1000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
         // Add a new ship in the players' harbor
+        clientService.requestNewUnit("Ship");
         LatLng shipPosition = new LatLng(currentHarbor.getGpsN(), currentHarbor.getGpsE());
         Marker marker = mMap.addMarker(new MarkerOptions().position(shipPosition));
         marker.setFlat(true);
         marker.setDraggable(true);
         BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.ship3b);
         marker.setIcon(descriptor);
+    }
+
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker marker) {
+
     }
 }
