@@ -13,7 +13,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/refresh_available_servers"
-        android:onClick="onClickRefreshServers"/>
+        android:id="@+id/refreshServerList"
+        android:onClick="onClickRefreshServers"
+        android:clickable="false"
+        android:enabled="true" />
 
     <TextView
         android:layout_width="match_parent"

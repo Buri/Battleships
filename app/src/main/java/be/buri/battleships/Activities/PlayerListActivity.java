@@ -1,12 +1,15 @@
 package be.buri.battleships.Activities;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -14,6 +17,7 @@ import android.widget.ListView;
 import java.util.List;
 import java.util.Vector;
 
+import be.buri.battleships.Engine.Const;
 import be.buri.battleships.Player;
 import be.buri.battleships.R;
 import be.buri.battleships.Services.ClientService;
@@ -33,9 +37,11 @@ public class PlayerListActivity extends AppCompatActivity {
         startService(intent);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
-        playerList = new ArrayAdapter(this, R.layout.device_name);
-        ListView playerListView = (ListView)findViewById(R.id.playerList);
+        playerList = new ArrayAdapter(this, R.layout.player_name);
+        ListView playerListView = (ListView) findViewById(R.id.playerList);
         playerListView.setAdapter(playerList);
+
+        registerReceiver(mUpdatePlayerListReceiver, IntentFilter.create(Const.BROADCAST_UPDATE_PLAYER_LIST, "text/plain"));
     }
 
     @Override
@@ -46,6 +52,8 @@ public class PlayerListActivity extends AppCompatActivity {
             unbindService(mConnection);
             mBound = false;
         }
+
+        unregisterReceiver(mUpdatePlayerListReceiver);
     }
 
     private ClientService clientService;
@@ -55,13 +63,6 @@ public class PlayerListActivity extends AppCompatActivity {
             ClientService.ClientBinder binder = (ClientService.ClientBinder) iBinder;
             clientService = binder.getService();
             mBound = true;
-
-            // make harbors as a radio button
-            clientService.getPlayers();
-            for (Player player : clientService.players) {
-                playerList.add(player.getName());
-            }
-
         }
 
         @Override
@@ -75,4 +76,18 @@ public class PlayerListActivity extends AppCompatActivity {
         Intent intent = new Intent(this, MapActivity.class);
         startActivity(intent);
     }
+
+    BroadcastReceiver mUpdatePlayerListReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // make harbors as a radio button
+            //clientService.getPlayers();
+
+            playerList.clear();
+            for (Player player : clientService.players) {
+                playerList.add(player.getName() + "\n" + player.getHarbor().getName());
+            }
+            Log.d("BS.UI.updatePlayerList", Integer.toString(clientService.players.size()));
+        }
+    };
 }

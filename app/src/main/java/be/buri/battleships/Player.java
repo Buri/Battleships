@@ -4,22 +4,42 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Vector;
 
+import be.buri.battleships.Engine.Const;
 import be.buri.battleships.Units.Harbor;
 import be.buri.battleships.Units.Unit;
 
 /**
  * Created by buri on 1.8.16.
  */
-public class Player implements Serializable{
+public class Player implements Serializable {
     private boolean connected = false;
     private String name;
     private int id;
-    private ArrayList<Unit> units = new ArrayList<Unit>();
+    transient private ArrayList<Unit> units = new ArrayList<Unit>();
     private Harbor harbor;
 
     public Player(int i) {
         this.id = i;
         this.name = "Player " + id;
+    }
+
+    public void update(Player data) {
+        name = data.getName();
+
+        if (null == data.getHarbor()) {
+            if (harbor != null) {
+                harbor.setPlayer(null);
+            }
+            harbor = null;
+        } else {
+            for (Harbor h : Const.getHarbors()) {
+                if (data.getHarbor().getName() == h.getName()) {
+                    setHarbor(h);
+                    break;
+                }
+            }
+        }
+
     }
 
     public void addUnit(Unit unit) {
@@ -51,10 +71,13 @@ public class Player implements Serializable{
         return harbor;
     }
 
-    public void setHarbor(Harbor harbor) {
-        if (harbor.getPlayer() != this) {
-            harbor.setPlayer(this);
+    public void setHarbor(Harbor h) {
+        if (null != this.harbor) {
+            units.remove(this.harbor);
         }
-        this.harbor = harbor;
+        if (null != h && h.getPlayer() != this) {
+            h.setPlayer(this);
+        }
+        this.harbor = h;
     }
 }

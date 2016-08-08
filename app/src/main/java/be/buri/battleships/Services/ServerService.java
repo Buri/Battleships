@@ -37,12 +37,11 @@ import be.buri.battleships.Units.Harbor;
  */
 public class ServerService extends EngineService {
     private ServerSocket serverSocket;
-    private Thread serverThread = null, gameThread = null;
-    private ConcurrentLinkedQueue incommingCommands = new ConcurrentLinkedQueue();
+    private Thread serverThread = null;
     public static final int SERVERPORT = 6000;
-    public static final int FPS = 3;
-    public static boolean running = false;
     public Map<Player, Socket> playerSocketMap = new HashMap<Player, Socket>();
+    protected static ConcurrentLinkedQueue incomingCommands = new ConcurrentLinkedQueue();
+    protected static Thread gameThread = null;
 
 
     public ServerService() {
@@ -62,68 +61,7 @@ public class ServerService extends EngineService {
             gameThread = new Thread(new GameThread(this));
             gameThread.start();
         }
-    }
-
-    class GameThread implements Runnable {
-        final ServerService service;
-
-        public GameThread(ServerService service) {
-            this.service = service;
-        }
-
-        private void respond(Command command, Object response) {
-
-        }
-
-        @Override
-        public void run() {
-            while (true) {
-                long start_time = System.nanoTime();
-
-                // Begin loop code here
-                while (!this.service.incommingCommands.isEmpty()) {
-                    Command command = (Command) this.service.incommingCommands.poll();
-                    Log.d("BS.Server.handleCommand", command.name);
-                    switch (command.name) {
-                        case Const.CMD_LIST_PLAYERS:
-                            handleListPlayers(command);
-                            break;
-                        case Const.CMD_IS_WARSHIPS:
-                            handleIsWarships(command);
-                            break;
-                        case Const.CMD_DISCONNECT:
-                            handleDisconnect(command);
-                            break;
-                        case Const.CMD_SET_PLAYER_NAME:
-                            for (Player player : players) {
-                                if (playerSocketMap.get(player) == command.socket) {
-                                    player.setName((String) command.arguments.get(0));
-                                    for (Harbor harbor : harbors) {
-                                        if (harbor.getName() == (String) command.arguments.get(1)) {
-                                            player.setHarbor(harbor);
-                                            break;
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                            handleListPlayers(command);
-                            break;
-                    }
-                }
-                // End loop code here
-
-                long end_time = System.nanoTime();
-                long difference = (long) (1000 / FPS - (end_time - start_time) / 1e6);
-                try {
-                    if (difference > 0) {
-                        Thread.sleep(difference);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        stopSelf();
     }
 
     class ServerThread implements Runnable {
@@ -156,44 +94,13 @@ public class ServerService extends EngineService {
         }
     }
 
-    class CommunicationThread implements Runnable {
-        final ServerService service;
-        private Socket clientSocket;
-
-        public CommunicationThread(Socket clientSocket, ServerService serverService) {
-            this.service = serverService;
-            this.clientSocket = clientSocket;
-        }
-
-        public void run() {
-            while (!Thread.currentThread().isInterrupted() && !clientSocket.isClosed()) {
-                try {
-                    Command command = Net.recieve(clientSocket.getInputStream());
-                    if (null == command) {
-                        clientSocket.close();
-                        command = new Command();
-                        command.name = Const.CMD_DISCONNECT;
-                        Thread.currentThread().interrupt();
-                    }
-                    command.socket = this.clientSocket;
-                    synchronized (service) {
-                        service.incommingCommands.add(command);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     private void handleListPlayers(Command command) {
         try {
             Command response = new Command();
             response.name = Const.CMD_LIST_PLAYERS;
             response.arguments.add(this.players);
             for (Player player : this.players) {
+                Log.d("BS.Server.listPlayers", player.getName() + (player.getHarbor() != null ? " / " + player.getHarbor().getName() : ""));
                 if (playerSocketMap.get(player) == command.socket) {
                     Log.d("BS.Server.listPlayers", "Current player: " + player.getName());
                     response.arguments.add(player.getId());
@@ -228,8 +135,10 @@ public class ServerService extends EngineService {
             if (command.socket == playerSocketMap.get(player)) {
                 players.remove(player);
                 playerSocketMap.remove(player);
+                break;
             }
         }
+        broadcastPlayerList();
     }
 
     private String getHostname() {
@@ -239,6 +148,60 @@ public class ServerService extends EngineService {
             return getString.invoke(null, "net.hostname").toString();
         } catch (Exception ex) {
             return "localhost";
+        }
+    }
+
+    @Override
+    void handleCommand(Command command) {
+        Log.d("BS.Server.handleCommand", command.name);
+        switch (command.name) {
+            case Const.CMD_LIST_PLAYERS:
+                handleListPlayers(command);
+                break;
+            case Const.CMD_IS_WARSHIPS:
+                handleIsWarships(command);
+                break;
+            case Const.CMD_DISCONNECT:
+                handleDisconnect(command);
+                break;
+            case Const.CMD_SET_PLAYER_NAME:
+                for (Player player : players) {
+                    if (playerSocketMap.get(player) == command.socket) {
+                        player.setName((String) command.arguments.get(0));
+                        for (Harbor harbor : harbors) {
+                            if (harbor.getName().equals((String) command.arguments.get(1))) {
+                                player.setHarbor(harbor);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                handleListPlayers(command);
+                break;
+        }
+    }
+
+    @Override
+    public ConcurrentLinkedQueue getCommandQueue() {
+        return this.incomingCommands;
+    }
+
+    @Override
+    public Thread getGameThread() {
+        return gameThread;
+    }
+
+    @Override
+    public void setGameThread(Thread t) {
+        gameThread = t;
+    }
+
+    private void broadcastPlayerList() {
+        Command command = new Command();
+        for (Player player : players) {
+            command.socket = playerSocketMap.get(player);
+            handleListPlayers(command);
         }
     }
 }

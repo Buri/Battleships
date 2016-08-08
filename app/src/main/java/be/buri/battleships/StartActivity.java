@@ -21,7 +21,15 @@ public class StartActivity extends AppCompatActivity {
         setContentView(R.layout.activity_start);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        findViewById(R.id.buttonHostGame).setEnabled(true);
+        findViewById(R.id.buttonConnectToHost).setEnabled(true);
+    }
+
     public void hostGame(View view) {
+        view.setEnabled(false);
         if (!ServerService.running) {
             Intent startServer = new Intent(this, ServerService.class);
             startService(startServer);
@@ -37,6 +45,7 @@ public class StartActivity extends AppCompatActivity {
     }
 
     public void joinGame(View view) {
+        view.setEnabled(false);
         Intent showServerList = new Intent(this, ConnectToServer.class);
         startActivity(showServerList);
     }

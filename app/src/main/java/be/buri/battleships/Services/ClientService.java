@@ -16,6 +16,7 @@ import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import be.buri.battleships.Engine.Command;
 import be.buri.battleships.Engine.Const;
@@ -27,7 +28,6 @@ import be.buri.battleships.Units.Harbor;
  * Created by buri on 1.8.16.
  */
 public class ClientService extends EngineService {
-    public static boolean running = false;
     public final static int CONNECT_TO_HOST = 0;
     public final static int FIND_SERVERS = 1;
     public final static int SET_PLAYER_NAME = 2;
@@ -35,10 +35,13 @@ public class ClientService extends EngineService {
     public final static String INTENT_TYPE = "IntentType";
     public final static String HOST_NAME = "HostName";
     private final IBinder mBinder = new ClientBinder();
-    private Player currentPlayer;
-    private Socket socket = null;
+    private static Player currentPlayer;
+    private static Socket socket = null;
     private boolean working = false;
-    public ArrayList<ServerInfo> localNetworkServers = new ArrayList<>();
+    public static ArrayList<ServerInfo> localNetworkServers = new ArrayList<>();
+    protected static ConcurrentLinkedQueue incomingCommands = new ConcurrentLinkedQueue();
+    protected static Thread gameThread = null;
+
 
     public class ClientBinder extends Binder {
         public ClientService getService() {
@@ -61,15 +64,20 @@ public class ClientService extends EngineService {
     @Override
     protected void onHandleIntent(Intent intent) {
         working = true;
+        if (null == this.gameThread) {
+            gameThread = new Thread(new GameThread(this));
+            gameThread.start();
+        }
         Log.d("BS.Client.intent", Integer.toString(intent.getIntExtra(INTENT_TYPE, -1)));
         switch (intent.getIntExtra(INTENT_TYPE, -1)) {
             case CONNECT_TO_HOST:
+                String hostname = intent.getStringExtra(HOST_NAME);
                 for (int i = 0; i < 10; i++) {
                     try {
-                        socket = new Socket(intent.getStringExtra(HOST_NAME), ServerService.SERVERPORT);
+                        socket = new Socket(hostname, ServerService.SERVERPORT);
                         break;
                     } catch (ConnectException e) {
-                        Log.i("BS.Net.connect", "Connection refused (" + i + ")");
+                        Log.i("BS.Net.connect", "Connection refused (" + hostname + ")");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -77,19 +85,13 @@ public class ClientService extends EngineService {
                 try {
                     if (socket.isConnected()) {
                         Log.d("Net", "Client connected");
+                        CommunicationThread commThread = new CommunicationThread(socket, this);
+                        new Thread(commThread).start();
                         Command serverCheck = new Command();
                         serverCheck.name = Const.CMD_IS_WARSHIPS;
                         Net.send(socket.getOutputStream(), serverCheck);
-                        Command response = Net.recieve(socket.getInputStream());
-                        String version = (String) response.arguments.get(1);
-                        if (!Const.CMD_IS_WARSHIPS_POSITIVE.equals(response.name)) {
-                            // exit
-                        }
-                        //getPlayers();
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
                 break;
@@ -110,10 +112,7 @@ public class ClientService extends EngineService {
                 command.arguments.add(currentPlayer.getHarbor().getName());
                 try {
                     Net.send(socket.getOutputStream(), command);
-                    handleListPlayers();
                 } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
                 break;
@@ -122,10 +121,7 @@ public class ClientService extends EngineService {
                 c.name = Const.CMD_LIST_PLAYERS;
                 try {
                     Net.send(socket.getOutputStream(), c);
-                    handleListPlayers();
                 } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
                 break;
@@ -133,17 +129,33 @@ public class ClientService extends EngineService {
         working = false;
     }
 
-    private void handleListPlayers() throws IOException, ClassNotFoundException {
-        Command response = Net.recieve(socket.getInputStream());
-        this.players.clear();
-        Vector<Player> resp = (Vector<Player>)response.arguments.get(0);
-        this.players.addAll(resp);
+    private void handleListPlayers(Command response) throws IOException, ClassNotFoundException {
+        Vector<Player> resp = (Vector<Player>) response.arguments.get(0);
         for (Player player : resp) {
+            if (!players.contains(player)) {
+                players.add(player);
+            }
             Log.d("BS.Client", player.getName());
-            if (player.getId() == (int)response.arguments.get(1)) {
+            if (player.getId() == (int) response.arguments.get(1)) {
                 currentPlayer = player;
             }
+            for (Player p : players) {
+                if (p.getId() == player.getId()) {
+                    p.update(player);
+                    break;
+                }
+            }
         }
+        if (players.size() > resp.size()) {
+            for (Player p : players) {
+                if (!resp.contains(p)) {
+                    players.remove(p);
+                }
+            }
+        }
+        Intent intent = new Intent(Const.BROADCAST_UPDATE_PLAYER_LIST);
+        intent.setType("text/plain");
+        sendBroadcast(intent);
     }
 
     public void getServersOnLocalNetwork() {
@@ -167,14 +179,7 @@ public class ClientService extends EngineService {
                     Command c = new Command();
                     c.name = Const.CMD_IS_WARSHIPS;
                     Net.send(tmp.getOutputStream(), c);
-                    Command response = Net.recieve(tmp.getInputStream());
                     tmp.close();
-                    ServerInfo si = new ServerInfo();
-                    si.version = response.arguments.get(0).toString();
-                    si.name = response.arguments.get(1).toString();
-                    si.ip = ipString;
-                    localNetworkServers.add(si);
-                    Log.d("BS.Client.findServers", si.name + "(" + si.ip + "): " + si.version);
                 }
             } catch (ConnectException e) {
                 // Noop, we are just trying servers
@@ -182,8 +187,6 @@ public class ClientService extends EngineService {
                 // Noop, we are just trying servers
                 // MOCK
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
@@ -195,19 +198,9 @@ public class ClientService extends EngineService {
     }
 
     public Vector<Player> getPlayers() {
-        Log.d("BS.Client.getPlayers", "Starting lookup");
         Intent intent = new Intent(this, ClientService.class);
         intent.putExtra(ClientService.INTENT_TYPE, ClientService.GET_PLAYER_LIST);
         startService(intent);
-        while (working) {
-            Log.d("BS.Client.getPlayers", "Working");
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        Log.d("BS.Client.getPlayers", "Done");
 
         return this.players;
     }
@@ -219,5 +212,43 @@ public class ClientService extends EngineService {
 
     public class ServerInfo {
         public String name, version, ip;
+    }
+
+    @Override
+    void handleCommand(Command command) {
+        Log.d("BS.Client.handleCommand", command.name + " (" + command.arguments.size() + ")");
+        switch (command.name) {
+            case Const.CMD_LIST_PLAYERS:
+                try {
+                    handleListPlayers(command);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case Const.CMD_IS_WARSHIPS_POSITIVE:
+                ServerInfo si = new ServerInfo();
+                si.version = command.arguments.get(0).toString();
+                si.name = command.arguments.get(1).toString();
+                si.ip = command.socket.getRemoteSocketAddress().toString();
+                localNetworkServers.add(si);
+                Log.d("BS.Client.findServers", si.name + "(" + si.ip + "): " + si.version);
+        }
+    }
+
+    @Override
+    public ConcurrentLinkedQueue getCommandQueue() {
+        return this.incomingCommands;
+    }
+
+    @Override
+    public Thread getGameThread() {
+        return gameThread;
+    }
+
+    @Override
+    public void setGameThread(Thread t) {
+        gameThread = t;
     }
 }

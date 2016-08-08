@@ -7,13 +7,10 @@ import be.buri.battleships.Player;
  */
 public class Harbor extends Unit {
     private String name;
-    private double gpsN;
-    private double gpsE;
 
     public Harbor(String name, double gpsN, double gpsE) {
+        super();
         this.name = name;
-        this.gpsN = gpsN;
-        this.gpsE = gpsE;
     }
 
     public String getName() {
@@ -24,18 +21,10 @@ public class Harbor extends Unit {
         this.name = name;
     }
 
-    public double getGpsN() {
-        return gpsN;
-    }
-
-    public double getGpsE() {
-        return gpsE;
-    }
-
     @Override
     public void setPlayer(Player player) {
         super.setPlayer(player);
-        if (player.getHarbor() != this) {
+        if (null != player && player.getHarbor() != this) {
             player.setHarbor(this);
         }
     }

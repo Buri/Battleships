@@ -13,6 +13,7 @@ import android.support.v7.widget.AppCompatTextView;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 
 
@@ -67,6 +68,8 @@ public class ConnectToServer extends AppCompatActivity {
 
     public void fillServerList() {
         servers.clear();
+        Button refreshServerListButton = (Button) findViewById(R.id.refreshServerList);
+        refreshServerListButton.setEnabled(false);
         do {
             try {
                 Thread.sleep(100);
@@ -81,6 +84,7 @@ public class ConnectToServer extends AppCompatActivity {
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
+        refreshServerListButton.setEnabled(true);
 
         for (ClientService.ServerInfo info : clientService.localNetworkServers) {
             if (info.version.equals(pInfo.versionName)) {

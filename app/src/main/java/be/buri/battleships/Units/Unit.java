@@ -8,21 +8,23 @@ import be.buri.battleships.Player;
 
 /**
  * Created by buri on 1.8.16.
- *
+ * <p/>
  * Abstract class: a harbour / a ship
  */
 public class Unit implements Serializable {
-    protected Point position = new Point(0, 0);
+    protected static int unitCount = 0;
+    protected int id;
     protected int hitpoints = 0;
     protected Player player;
+    protected double gpsN;
+    protected double gpsE;
 
-    public Point getPosition() {
-        return position;
+    public Unit() {
+        id = ++unitCount;
+        this.gpsN = gpsN;
+        this.gpsE = gpsE;
     }
 
-    public void setPosition(Point position) {
-        this.position = position;
-    }
 
     public int getHitpoints() {
         return hitpoints;
@@ -41,5 +43,18 @@ public class Unit implements Serializable {
         if (!player.hasUnit(this)) {
             player.addUnit(this);
         }
+    }
+
+    public double getGpsN() {
+        return gpsN;
+    }
+
+    public double getGpsE() {
+        return gpsE;
+    }
+
+
+    public int getId() {
+        return id;
     }
 }
