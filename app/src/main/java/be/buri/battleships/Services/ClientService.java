@@ -136,7 +136,7 @@ public class ClientService extends EngineService {
                 players.add(player);
             }
             Log.d("BS.Client", player.getName());
-            if (player.getId() == (int) response.arguments.get(1)) {
+            if (response.arguments.size() == 2 && player.getId() == (int) response.arguments.get(1)) {
                 currentPlayer = player;
             }
             for (Player p : players) {

@@ -19,9 +19,8 @@ public class Const {
     private static Vector<Harbor> harbors = new Vector<Harbor>() {
         {
             add(new Harbor("Aarhus", 56.156998, 10.213376));
-            add(new Harbor("Aalborg", 57.053255, 9.916739));
             add(new Harbor("Copenhagen", 55.676087, 12.587616));
-            add(new Harbor("Esbjerg", 55.463119, 8.440151));
+            add(new Harbor("Esbjerg", 55.460393, 8.436720));
             add(new Harbor("Frederikshavn", 57.439275, 10.544074));
             add(new Harbor("Hanstholm", 57.120962, 8.598468));
             add(new Harbor("Hirtshals", 57.594133, 9.969568));
