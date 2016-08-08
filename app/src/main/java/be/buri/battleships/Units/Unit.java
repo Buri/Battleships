@@ -2,6 +2,8 @@ package be.buri.battleships.Units;
 
 import android.graphics.Point;
 
+import java.io.Serializable;
+
 import be.buri.battleships.Player;
 
 /**
@@ -9,7 +11,7 @@ import be.buri.battleships.Player;
  *
  * Abstract class: a harbour / a ship
  */
-public class Unit {
+public class Unit implements Serializable {
     protected Point position = new Point(0, 0);
     protected int hitpoints = 0;
     protected Player player;

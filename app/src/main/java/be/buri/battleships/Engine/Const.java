@@ -8,9 +8,11 @@ import be.buri.battleships.Units.Harbor;
  * Created by buri on 3.8.16.
  */
 public class Const {
+    public final static String CMD_DISCONNECT = "DISCONNECT";
     public final static String CMD_LIST_PLAYERS = "LIST_PLAYERS";
     public final static String CMD_IS_WARSHIPS = "GAME_IDENTIFY";
     public final static String CMD_IS_WARSHIPS_POSITIVE = "GAME_IDENTIFY_YES";
+    public final static String CMD_SET_PLAYER_NAME = "SET_PLAYER_NAME";
     public static Vector<Harbor> getHarbors(){
         return new Vector<Harbor>() {
             {

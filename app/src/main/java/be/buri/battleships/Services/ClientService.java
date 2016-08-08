@@ -7,6 +7,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
+
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
@@ -30,14 +31,14 @@ public class ClientService extends EngineService {
     public final static int CONNECT_TO_HOST = 0;
     public final static int FIND_SERVERS = 1;
     public final static int SET_PLAYER_NAME = 2;
+    public final static int GET_PLAYER_LIST = 3;
     public final static String INTENT_TYPE = "IntentType";
     public final static String HOST_NAME = "HostName";
     private final IBinder mBinder = new ClientBinder();
-    private final Player currentPlayer;
+    private Player currentPlayer;
     private Socket socket = null;
     private boolean working = false;
     public ArrayList<ServerInfo> localNetworkServers = new ArrayList<>();
-    public Vector<Harbor> harbors = Const.getHarbors();
 
     public class ClientBinder extends Binder {
         public ClientService getService() {
@@ -48,8 +49,7 @@ public class ClientService extends EngineService {
     public ClientService() {
         super("ClientService");
         running = true;
-        currentPlayer = new Player("Your Name");
-
+        currentPlayer = new Player(0);
     }
 
     @Nullable
@@ -82,18 +82,10 @@ public class ClientService extends EngineService {
                         Net.send(socket.getOutputStream(), serverCheck);
                         Command response = Net.recieve(socket.getInputStream());
                         String version = (String) response.arguments.get(1);
-                        if (!Const.CMD_IS_WARSHIPS_POSITIVE.equals(response.name)){
+                        if (!Const.CMD_IS_WARSHIPS_POSITIVE.equals(response.name)) {
                             // exit
                         }
-
-                        Command c = new Command();
-                        c.name = Const.CMD_LIST_PLAYERS;
-                        Net.send(socket.getOutputStream(), c);
-                        response = Net.recieve(socket.getInputStream());
-                        for (Object name : response.arguments) {
-                            Log.d("BS.Client", name.toString());
-                        }
-                        Net.send(socket.getOutputStream(), c);
+                        //getPlayers();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -107,14 +99,51 @@ public class ClientService extends EngineService {
             case SET_PLAYER_NAME:
                 currentPlayer.setName(intent.getStringExtra("Player name"));
                 for (Harbor item : harbors) {
-                    if (item.getName().equals(intent.getStringExtra("Harbor name")) ) {
+                    if (item.getName().equals(intent.getStringExtra("Harbor name"))) {
                         item.setPlayer(currentPlayer);
                         break;
                     }
                 }
+                Command command = new Command();
+                command.name = Const.CMD_SET_PLAYER_NAME;
+                command.arguments.add(currentPlayer.getName());
+                command.arguments.add(currentPlayer.getHarbor().getName());
+                try {
+                    Net.send(socket.getOutputStream(), command);
+                    handleListPlayers();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case GET_PLAYER_LIST:
+                Command c = new Command();
+                c.name = Const.CMD_LIST_PLAYERS;
+                try {
+                    Net.send(socket.getOutputStream(), c);
+                    handleListPlayers();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
                 break;
         }
         working = false;
+    }
+
+    private void handleListPlayers() throws IOException, ClassNotFoundException {
+        Command response = Net.recieve(socket.getInputStream());
+        this.players.clear();
+        Vector<Player> resp = (Vector<Player>)response.arguments.get(0);
+        this.players.addAll(resp);
+        for (Player player : resp) {
+            Log.d("BS.Client", player.getName());
+            if (player.getId() == (int)response.arguments.get(1)) {
+                currentPlayer = player;
+            }
+        }
     }
 
     public void getServersOnLocalNetwork() {
@@ -122,7 +151,7 @@ public class ClientService extends EngineService {
         WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         int ip = wifiInfo.getIpAddress();
-        for (byte i = 24; i < 28; i++) {
+        for (int i = 125; i < 132; i++) {
             String ipString = String.format(
                     "%d.%d.%d.%d",
                     (ip & 0xff),
@@ -165,9 +194,26 @@ public class ClientService extends EngineService {
         localNetworkServers.add(si);
     }
 
+    public Vector<Player> getPlayers() {
+        Log.d("BS.Client.getPlayers", "Starting lookup");
+        Intent intent = new Intent(this, ClientService.class);
+        intent.putExtra(ClientService.INTENT_TYPE, ClientService.GET_PLAYER_LIST);
+        startService(intent);
+        while (working) {
+            Log.d("BS.Client.getPlayers", "Working");
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        Log.d("BS.Client.getPlayers", "Done");
 
-    public boolean isWorking()
-    {
+        return this.players;
+    }
+
+
+    public boolean isWorking() {
         return working;
     }
 

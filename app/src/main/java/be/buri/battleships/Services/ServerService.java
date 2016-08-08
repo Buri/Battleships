@@ -18,7 +18,10 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Dictionary;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -27,6 +30,7 @@ import be.buri.battleships.Engine.Command;
 import be.buri.battleships.Engine.Const;
 import be.buri.battleships.Network.Net;
 import be.buri.battleships.Player;
+import be.buri.battleships.Units.Harbor;
 
 /**
  * Created by buri on 1.8.16.
@@ -38,6 +42,7 @@ public class ServerService extends EngineService {
     public static final int SERVERPORT = 6000;
     public static final int FPS = 3;
     public static boolean running = false;
+    public Map<Player, Socket> playerSocketMap = new HashMap<Player, Socket>();
 
 
     public ServerService() {
@@ -47,7 +52,6 @@ public class ServerService extends EngineService {
     @Override
     protected void onHandleIntent(Intent intent) {
         if (running) return;
-        ;
 
         this.running = true;
         if (null == this.serverThread) {
@@ -87,6 +91,24 @@ public class ServerService extends EngineService {
                         case Const.CMD_IS_WARSHIPS:
                             handleIsWarships(command);
                             break;
+                        case Const.CMD_DISCONNECT:
+                            handleDisconnect(command);
+                            break;
+                        case Const.CMD_SET_PLAYER_NAME:
+                            for (Player player : players) {
+                                if (playerSocketMap.get(player) == command.socket) {
+                                    player.setName((String) command.arguments.get(0));
+                                    for (Harbor harbor : harbors) {
+                                        if (harbor.getName() == (String) command.arguments.get(1)) {
+                                            player.setHarbor(harbor);
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            handleListPlayers(command);
+                            break;
                     }
                 }
                 // End loop code here
@@ -124,9 +146,9 @@ public class ServerService extends EngineService {
                     socket = serverSocket.accept();
                     CommunicationThread commThread = new CommunicationThread(socket, service);
                     new Thread(commThread).start();
-                    synchronized (service) {
-                        service.players.add(new Player("Player " + (++counter)));
-                    }
+                    Player newPlayer = new Player(++counter);
+                    service.players.add(newPlayer);
+                    playerSocketMap.put(newPlayer, socket);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -144,9 +166,15 @@ public class ServerService extends EngineService {
         }
 
         public void run() {
-            while (!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted() && !clientSocket.isClosed()) {
                 try {
                     Command command = Net.recieve(clientSocket.getInputStream());
+                    if (null == command) {
+                        clientSocket.close();
+                        command = new Command();
+                        command.name = Const.CMD_DISCONNECT;
+                        Thread.currentThread().interrupt();
+                    }
                     command.socket = this.clientSocket;
                     synchronized (service) {
                         service.incommingCommands.add(command);
@@ -164,8 +192,12 @@ public class ServerService extends EngineService {
         try {
             Command response = new Command();
             response.name = Const.CMD_LIST_PLAYERS;
+            response.arguments.add(this.players);
             for (Player player : this.players) {
-                response.arguments.add(player.getName());
+                if (playerSocketMap.get(player) == command.socket) {
+                    Log.d("BS.Server.listPlayers", "Current player: " + player.getName());
+                    response.arguments.add(player.getId());
+                }
             }
             Net.respond(command, response);
         } catch (IOException e) {
@@ -188,6 +220,15 @@ public class ServerService extends EngineService {
             e.printStackTrace();
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void handleDisconnect(Command command) {
+        for (Player player : players) {
+            if (command.socket == playerSocketMap.get(player)) {
+                players.remove(player);
+                playerSocketMap.remove(player);
+            }
         }
     }
 

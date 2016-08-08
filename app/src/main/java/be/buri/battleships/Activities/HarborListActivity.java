@@ -4,8 +4,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -43,6 +45,12 @@ public class HarborListActivity extends AppCompatActivity {
         // hide the Next button
         Button nextButton = (Button) findViewById(R.id.nextButton);
         nextButton.setVisibility(View.GONE);
+
+        EditText playerName = (EditText) findViewById(R.id.editTextPlayerName);
+        Cursor c = getApplication().getContentResolver().query(ContactsContract.Profile.CONTENT_URI, null, null, null, null);
+        c.moveToFirst();
+        playerName.setText(c.getString(c.getColumnIndex("display_name")));
+        c.close();
 
 
         //ClientService service = (ClientService);
