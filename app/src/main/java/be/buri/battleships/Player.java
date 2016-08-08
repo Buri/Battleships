@@ -1,5 +1,7 @@
 package be.buri.battleships;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Vector;
@@ -79,5 +81,11 @@ public class Player implements Serializable {
             h.setPlayer(this);
         }
         this.harbor = h;
+    }
+
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
+    {
+        stream.defaultReadObject();
+        units = new ArrayList<>();
     }
 }

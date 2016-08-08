@@ -1,8 +1,10 @@
 package be.buri.battleships.Activities;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,14 +29,18 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import be.buri.battleships.Engine.Const;
 import be.buri.battleships.R;
 import be.buri.battleships.Services.ClientService;
 import be.buri.battleships.Units.Harbor;
+import be.buri.battleships.Units.Unit;
 
-public class MapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnCameraChangeListener, GoogleMap.OnMarkerDragListener {
+public class MapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnCameraChangeListener, GoogleMap.OnMarkerDragListener, GoogleMap.OnMapLoadedCallback {
 
     public static final Double LON_MIN = 7.34d;
     public static final Double LON_MAX = 13.5d;
@@ -46,6 +52,14 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     private boolean mBound = false;
     private Harbor currentHarbor;
 
+    private BroadcastReceiver mUnitUpdateReciever = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Unit unit = ClientService.units.get(intent.getIntExtra("UNIT_ID", -1));
+            createMarkerForUnit(unit);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,8 +68,17 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        registerReceiver(mUnitUpdateReciever, new IntentFilter(Const.BROADCAST_UPDATE_UNITS));
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mBound) {
+            unbindService(mConnection);
+        }
+        unregisterReceiver(mUnitUpdateReciever);
+    }
 
     /**
      * Manipulates the map once available.
@@ -79,6 +102,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         // limit the selected area
         mMap.setOnCameraChangeListener(this);
         mMap.setOnMarkerDragListener(this);
+        mMap.setOnMapLoadedCallback(this);
         mMap.getUiSettings().setRotateGesturesEnabled(false);
         mMap.getUiSettings().setZoomControlsEnabled(false);
         mMap.getUiSettings().setZoomGesturesEnabled(false);
@@ -105,16 +129,16 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             ClientService.ClientBinder binder = (ClientService.ClientBinder) iBinder;
-            Log.e("BS.map", "OK");
             clientService = binder.getService();
             mBound = true;
+            currentHarbor = clientService.getCurrentPlayer().getHarbor();
             for (Harbor harbor : clientService.harbors) {
                 if (harbor.getPlayer() != null) {
                     Log.d("BS.Map.serCon", harbor.toString());
-                    currentHarbor = harbor;
+//                    currentHarbor = harbor;
                     // Add a marker in the players' harbor
                     LatLng harborPosition = new LatLng(harbor.getGpsN(), harbor.getGpsE());
-                    Marker marker = mMap.addMarker(new MarkerOptions().position(harborPosition).title(harbor.getPlayer().getName()));
+                    Marker marker = mMap.addMarker(new MarkerOptions().position(harborPosition).title(harbor.getName() + " (" + harbor.getPlayer().getName() + ")"));
                     marker.setFlat(true);
                     BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.harbor);
                     marker.setIcon(descriptor);
@@ -132,26 +156,11 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     };
 
     public void makeShip(View view) {
-        /*Integer time = 10;
-        TextView timerNewShip = (TextView) findViewById(R.id.timerNewShip);
-        while(time > 0) {
-            timerNewShip.setText("New ship for "+ Integer.toString(time));
-            time -= 1;
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }*/
         // Add a new ship in the players' harbor
         clientService.requestNewUnit("Ship");
-        LatLng shipPosition = new LatLng(currentHarbor.getGpsN(), currentHarbor.getGpsE());
-        Marker marker = mMap.addMarker(new MarkerOptions().position(shipPosition));
-        marker.setFlat(true);
-        marker.setDraggable(true);
-        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.ship3b);
-        marker.setIcon(descriptor);
     }
+
+
 
     @Override
     public void onMarkerDragStart(Marker marker) {
@@ -166,5 +175,23 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     @Override
     public void onMarkerDragEnd(Marker marker) {
 
+    }
+
+    @Override
+    public void onMapLoaded() {
+        Iterator it = ClientService.units.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            createMarkerForUnit((Unit) pair.getValue());
+        }
+    }
+
+    private void createMarkerForUnit(Unit unit) {
+        LatLng shipPosition = new LatLng(unit.getGpsN(), unit.getGpsE());
+        Marker marker = mMap.addMarker(new MarkerOptions().position(shipPosition));
+        marker.setFlat(true);
+        marker.setDraggable(true);
+        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.ship3b);
+        marker.setIcon(descriptor);
     }
 }

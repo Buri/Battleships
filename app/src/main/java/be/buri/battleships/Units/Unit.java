@@ -2,6 +2,8 @@ package be.buri.battleships.Units;
 
 import android.graphics.Point;
 
+import com.google.android.gms.maps.model.Marker;
+
 import java.io.Serializable;
 
 import be.buri.battleships.Player;
@@ -18,6 +20,7 @@ public class Unit implements Serializable {
     protected Player player;
     protected double gpsN;
     protected double gpsE;
+    protected Marker marker;
 
     public Unit() {
         id = unitCount++;
@@ -38,7 +41,7 @@ public class Unit implements Serializable {
 
     public void setPlayer(Player player) {
         this.player = player;
-        if (!player.hasUnit(this)) {
+        if (null != player && !player.hasUnit(this)) {
             player.addUnit(this);
         }
     }
@@ -60,5 +63,25 @@ public class Unit implements Serializable {
         this.hitpoints = u.hitpoints;
         this.gpsE = u.gpsE;
         this.gpsN = u.gpsN;
+    }
+
+    public boolean hasMarker() {
+        return null != marker;
+    }
+
+    public Marker getMarker() {
+        return marker;
+    }
+
+    public void setMarker(Marker marker) {
+        this.marker = marker;
+    }
+
+    public void setGpsN(double gpsN) {
+        this.gpsN = gpsN;
+    }
+
+    public void setGpsE(double gpsE) {
+        this.gpsE = gpsE;
     }
 }

@@ -31,6 +31,7 @@ import be.buri.battleships.Engine.Const;
 import be.buri.battleships.Network.Net;
 import be.buri.battleships.Player;
 import be.buri.battleships.Units.Harbor;
+import be.buri.battleships.Units.Unit;
 
 /**
  * Created by buri on 1.8.16.
@@ -42,7 +43,6 @@ public class ServerService extends EngineService {
     public Map<Player, Socket> playerSocketMap = new HashMap<Player, Socket>();
     protected static ConcurrentLinkedQueue incomingCommands = new ConcurrentLinkedQueue();
     protected static Thread gameThread = null;
-
 
     public ServerService() {
         super("ServerService");
@@ -179,6 +179,28 @@ public class ServerService extends EngineService {
                 }
                 handleListPlayers(command);
                 break;
+            case Const.CMD_REQUEST_NEW_UNIT:
+                handleRequestNewUnit(command);
+                break;
+        }
+    }
+
+    private void handleRequestNewUnit(Command command) {
+        Command response = new Command();
+        Unit unit = new Unit();
+        Player player = findPlayerById(command.playerId);
+        unit.setPlayer(player);
+        Harbor harbor = player.getHarbor();
+        unit.setGpsE(harbor.getGpsE());
+        unit.setGpsN(harbor.getGpsN());
+        units.put(unit.getId(), unit);
+        response.name = Const.CMD_ADD_UNIT;
+        response.arguments.add(unit);
+        response.arguments.add(unit.getPlayer().getId());
+        try {
+            Net.respond(command, response);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -205,5 +227,23 @@ public class ServerService extends EngineService {
                 handleListPlayers(command);
             }
         }
+    }
+
+
+    protected Player findPlayerById(int i) {
+        for (Player player : players) {
+            if (player.getId() == i) {
+                return player;
+            }
+        }
+        return null;
+    }
+    protected Player findPlayerBySocket(Socket socket) {
+        for (Player player : players) {
+            if (playerSocketMap.get(player) == socket) {
+                return player;
+            }
+        }
+        return null;
     }
 }

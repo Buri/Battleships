@@ -20,6 +20,8 @@ public class Const {
 
 
     public static final String BROADCAST_UPDATE_PLAYER_LIST = "BROADCAST_UPDATE_PLAYER_LIST";
+    public static final String BROADCAST_UPDATE_UNITS = "BROADCAST_UPDATE_UNITS";
+
 
     private static Vector<Harbor> harbors = new Vector<Harbor>() {
         {
