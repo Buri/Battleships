@@ -6,13 +6,20 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.media.Image;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -27,6 +34,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.Array;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -45,6 +61,9 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     ClientService clientService;
     private boolean mBound = false;
     private Harbor currentHarbor;
+    private Bitmap waterMap;
+
+    LatLng actualLatLng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +73,17 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        /* Code to create a static google map -> it's already saved
+        try {
+            saveImage("http://maps.googleapis.com/maps/api/staticmap?center=56,10.42&zoom=7&size=6500x5000&sensor=false&visual_refresh=true%20&style=feature:water|color:0x00FF00&style=element:labels|visibility:off%20&style=feature:transit|visibility:off%20&style=feature:poi|visibility:off&style=feature:road|visibility:off%20&style=feature:administrative|visibility:off&key=AIzaSyBEVR6YpRzJ6qeTa3se_95mxTCBAxpgyCQ"
+                        , "waterMap.png");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+        // Set the image with a water map
+        ImageView imageView =  new ImageView(this);
+        imageView.setImageResource(R.drawable.watermap);
+        waterMap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
     }
 
 
@@ -75,7 +105,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         startService(intent);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
-        mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         // limit the selected area
         mMap.setOnCameraChangeListener(this);
         mMap.setOnMarkerDragListener(this);
@@ -122,7 +152,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(harborPosition, 8));
                 }
             }
-
         }
 
         @Override
@@ -155,7 +184,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
     @Override
     public void onMarkerDragStart(Marker marker) {
-
+        actualLatLng = marker.getPosition();
     }
 
     @Override
@@ -165,6 +194,33 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
     @Override
     public void onMarkerDragEnd(Marker marker) {
+        double[] point = translateCoords(marker.getPosition());
+        if (isWater((int)point[0], (int)point[1])) {
+            Log.d("WATER", "is water");
+        } else {
+            Log.d("WATER", "land");
+            //marker.setPosition(actualLatLng);
+        }
+    }
 
+    /**
+     * Returns true if the color is for water
+     * @return boolean
+     */
+    private boolean isWater(int x, int y) {
+        int pixel = waterMap.getPixel(x,y);
+        Log.d("WATER", "pixel " + "RGB(" +Color.red(pixel)+ ", " + Color.green(pixel) + ", " + Color.blue(pixel) + ")");
+        // check if the pixel is water
+        if (Color.red(pixel) < 110 && Color.green(pixel) < 110 && Color.blue(pixel) < 110) {
+            return true;
+        }
+        return false;
+    }
+
+    protected double[] translateCoords(LatLng source) {
+        double dy = 640 -(source.latitude - LAT_MIN) / (LAT_MAX - LAT_MIN) * 640,
+                dx = (source.longitude - LON_MIN) / (LON_MAX - LON_MIN) * 640;
+        Log.d("WATER", "coords "+ dx + " " + dy );
+        return new double[]{dx, dy};
     }
 }
