@@ -4,7 +4,7 @@ package be.buri.battleships.Units;
  * Created by buri on 9.8.16.
  */
 public class Ship extends Unit {
-    private double speed = 0.05d, destLat = 0, destLon = 0;
+    private double speed = 0.075d, destLat = 0, destLon = 0;
 
     public double getSpeed() {
         return speed;

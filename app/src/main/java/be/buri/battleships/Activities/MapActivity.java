@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -210,6 +211,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             clientService.orderUnitMovement(marker.getPosition(), clientService.findShipByMarker(marker));
         } else {
             Log.d("WATER", "land");
+            Toast.makeText(this, R.string.invalid_order_target_land, Toast.LENGTH_SHORT).show();;
             marker.setPosition(actualLatLng);
         }
         currentlyDraggedMarker = null;
