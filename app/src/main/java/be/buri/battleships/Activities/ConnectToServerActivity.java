@@ -133,7 +133,7 @@ public class ConnectToServerActivity extends AppCompatActivity {
     }
 
     public void onClickSelectServer(View view) {
-        AppCompatTextView view1 = (AppCompatTextView)view;
+        AppCompatTextView view1 = (AppCompatTextView) view;
         Helper.connectToServer(this, view1.getText().toString().split("\n")[1]);
     }
 }

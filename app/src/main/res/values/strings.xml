@@ -8,4 +8,13 @@
     <string name="enter_server_name">Enter server name</string>
     <string name="connect">Connect</string>
     <string name="invalid_order_target_land">You cannot make ship go on land</string>
+    <string name="your_name">Your Name</string>
+    <string name="select_your_harbor">Select your harbor</string>
+    <string name="next">Next</string>
+    <string name="make_ship">Make ship</string>
+    <string name="host_game">Host game</string>
+    <string name="connect_to_host">Connect to host</string>
+    <string name="ship_on_the_wave">Ship on the wave</string>
+    <string name="player_list">Player list</string>
+    <string name="start">Start!</string>
 </resources>

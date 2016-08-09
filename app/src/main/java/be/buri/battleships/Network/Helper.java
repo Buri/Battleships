@@ -16,7 +16,7 @@ public class Helper {
     static Random mRand = new Random();
     static int[] colors = {Color.GREEN, Color.RED, Color.YELLOW, Color.BLUE};
 
-    public static void connectToServer (Context context, String serverIp) {
+    public static void connectToServer(Context context, String serverIp) {
         Toast.makeText(context, "Connecting to " + serverIp, Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(context, ClientService.class);
         intent.putExtra(ClientService.INTENT_TYPE, ClientService.CONNECT_TO_HOST);
@@ -28,8 +28,7 @@ public class Helper {
         Toast.makeText(context, "Failed to connect to the server", Toast.LENGTH_SHORT).show();
     }
 
-    public static int getRandomColor()
-    {
+    public static int getRandomColor() {
         return colors[mRand.nextInt(colors.length - 1)];
     }
 }

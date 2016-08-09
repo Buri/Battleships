@@ -8,18 +8,12 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.ContactsContract;
-import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import be.buri.battleships.R;
 import be.buri.battleships.Services.ClientService;
@@ -55,6 +49,7 @@ public class HarborListActivity extends AppCompatActivity {
 
         //ClientService service = (ClientService);
     }
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -85,8 +80,7 @@ public class HarborListActivity extends AppCompatActivity {
         }
     };
 
-    public void launchPlayerList(View view)
-    {
+    public void launchPlayerList(View view) {
         // save the player name and the selected harbor
         Intent setPlayer = new Intent(this, ClientService.class);
         EditText playerName = (EditText) findViewById(R.id.editTextPlayerName);
@@ -100,8 +94,7 @@ public class HarborListActivity extends AppCompatActivity {
         startActivity(showPlayerList);
     }
 
-    private void makeRadioButton(String name)
-    {
+    private void makeRadioButton(String name) {
         RadioButton newRadioButton = new RadioButton(this);
         newRadioButton.setText(name);
         newRadioButton.setOnClickListener(new View.OnClickListener() {

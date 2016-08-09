@@ -1,33 +1,32 @@
-
 <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/map"
     android:name="com.google.android.gms.maps.SupportMapFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="be.buri.battleships.Activities.MapActivity">
+
     <Button
+        android:id="@+id/makeShipButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="left|top"
+        android:onClick="makeShip"
         android:padding="10dp"
-        android:textColor="@color/white"
-        android:text="MAKE SHIP"
-        android:id="@+id/makeShipButton"
-        android:onClick="makeShip"/>
+        android:text="@string/make_ship"
+        android:textColor="@color/white" />
 
     <TextView
+        android:id="@+id/timerNewShip"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="10dp"
         android:layout_gravity="right"
-        android:textSize="14sp"
-        android:textColor="@color/white"
+        android:padding="10dp"
         android:shadowColor="@color/lightBlack"
         android:shadowDx="1"
         android:shadowDy="1"
         android:shadowRadius="2"
         android:text=""
-        android:id="@+id/timerNewShip"/>
+        android:textColor="@color/white"
+        android:textSize="14sp" />
 </fragment>

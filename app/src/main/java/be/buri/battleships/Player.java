@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Vector;
 
 import be.buri.battleships.Engine.Const;
 import be.buri.battleships.Units.Harbor;
@@ -30,7 +29,6 @@ public class Player implements Serializable {
 
     public void update(Player data) {
         name = data.getName();
-
         if (null == data.getHarbor()) {
             if (harbor != null) {
                 harbor.setPlayer(null);
@@ -44,7 +42,6 @@ public class Player implements Serializable {
                 }
             }
         }
-
     }
 
     public void addUnit(Unit unit) {
@@ -90,8 +87,7 @@ public class Player implements Serializable {
         this.harbor = h;
     }
 
-    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException
-    {
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         units = new ArrayList<>();
     }

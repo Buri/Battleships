@@ -19,11 +19,9 @@ public class Const {
     public final static String CMD_REQUEST_NEW_UNIT = "REQUEST_NEW_UNIT";
     public final static String CMD_REQUEST_UNIT_ORDER = "CMD_REQUEST_UNIT_ORDER";
 
-
     public static final String BROADCAST_UPDATE_PLAYER_LIST = "BROADCAST_UPDATE_PLAYER_LIST";
     public static final String BROADCAST_ADD_UNITS = "BROADCAST_ADD_UNITS";
     public static final String BROADCAST_UPDATE_UNITS = "BROADCAST_UPDATE_UNITS";
-
 
     private static Vector<Harbor> harbors = new Vector<Harbor>() {
         {
@@ -37,7 +35,8 @@ public class Const {
             add(new Harbor("Skagen", 57.718120, 10.588968));
         }
     };
-    public static Vector<Harbor> getHarbors(){
+
+    public static Vector<Harbor> getHarbors() {
         return harbors;
     }
 }

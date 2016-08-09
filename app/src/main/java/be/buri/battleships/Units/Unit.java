@@ -1,16 +1,12 @@
 package be.buri.battleships.Units;
 
-import android.graphics.Point;
-
 import com.google.android.gms.maps.model.Marker;
-
 import java.io.Serializable;
-
 import be.buri.battleships.Player;
 
 /**
  * Created by buri on 1.8.16.
- * <p/>
+ *
  * Abstract class: a harbour / a ship
  */
 public class Unit implements Serializable {

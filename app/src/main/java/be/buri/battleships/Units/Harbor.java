@@ -38,7 +38,6 @@ public class Harbor extends Unit {
             s += ", " + player.getName();
         }
         s += ")";
-
         return s;
     }
 }

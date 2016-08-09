@@ -10,30 +10,31 @@
     tools:context="be.buri.battleships.StartActivity">
 
     <Button
+        android:id="@+id/buttonHostGame"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Host game"
-        android:id="@+id/buttonHostGame"
         android:layout_alignParentTop="true"
-        android:textSize="40sp"
+        android:enabled="true"
         android:onClick="hostGame"
-        android:enabled="true" />
+        android:text="@string/host_game"
+        android:textSize="40sp" />
 
     <Button
+        android:id="@+id/buttonConnectToHost"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Connect to host"
-        android:onClick="joinGame"
-        android:id="@+id/buttonConnectToHost"
         android:layout_below="@+id/buttonHostGame"
-        android:textSize="40sp"
-        android:enabled="true" />
+        android:enabled="true"
+        android:onClick="joinGame"
+        android:text="@string/connect_to_host"
+        android:textSize="40sp" />
 
     <ImageView
+        android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/imageView"
         android:layout_below="@+id/buttonConnectToHost"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="106dp" />
+        android:layout_marginTop="106dp"
+        android:contentDescription="@string/ship_on_the_wave" />
 </RelativeLayout>

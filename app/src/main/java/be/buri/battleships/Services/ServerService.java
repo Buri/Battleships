@@ -178,9 +178,9 @@ public class ServerService extends EngineService {
                 handleRequestNewUnit(command);
                 break;
             case Const.CMD_REQUEST_UNIT_ORDER:
-                Ship unit = ((Ship)units.get((int)command.arguments.get(0)));
-                unit.setDestLat((double)command.arguments.get(1));
-                unit.setDestLon((double)command.arguments.get(2));
+                Ship unit = ((Ship) units.get((int) command.arguments.get(0)));
+                unit.setDestLat((double) command.arguments.get(1));
+                unit.setDestLon((double) command.arguments.get(2));
                 break;
         }
     }
@@ -199,8 +199,8 @@ public class ServerService extends EngineService {
         Harbor harbor = player.getHarbor();
         unit.setGpsE(harbor.getGpsE());
         unit.setGpsN(harbor.getGpsN());
-        unit.setDestLat(mRand.nextDouble()*(MapActivity.LAT_MAX - MapActivity.LAT_MIN)+MapActivity.LAT_MIN);
-        unit.setDestLon(mRand.nextDouble()*(MapActivity.LON_MAX - MapActivity.LON_MIN)+MapActivity.LON_MIN);
+        unit.setDestLat(mRand.nextDouble() * (MapActivity.LAT_MAX - MapActivity.LAT_MIN) + MapActivity.LAT_MIN);
+        unit.setDestLon(mRand.nextDouble() * (MapActivity.LON_MAX - MapActivity.LON_MIN) + MapActivity.LON_MIN);
         units.put(unit.getId(), unit);
         response.name = Const.CMD_ADD_UNIT;
         response.arguments.add(unit);
@@ -267,7 +267,6 @@ public class ServerService extends EngineService {
     @Override
     protected void execute() {
         // Move units
-        //Log.i("BS.Server.execute", "Running execute");
         Iterator it = units.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();

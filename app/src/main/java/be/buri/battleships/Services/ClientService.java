@@ -308,8 +308,7 @@ public class ClientService extends EngineService {
         gameThread = t;
     }
 
-    public void requestNewUnit(String unit)
-    {
+    public void requestNewUnit(String unit) {
         Intent intent = new Intent(this, this.getClass());
         intent.putExtra(INTENT_TYPE, REQUEST_NEW_UNIT);
         intent.putExtra("UNIT_TYPE", unit);
@@ -334,7 +333,7 @@ public class ClientService extends EngineService {
             Unit unit = (Unit) pair.getValue();
             Log.d("BS.Client.FSM", unit.getMarker().getId() + " == " + marker.getId());
             if (unit.getMarker().getId().equals(marker.getId())) {
-                return (Ship)unit;
+                return (Ship) unit;
             }
         }
         return null;

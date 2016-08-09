@@ -10,35 +10,35 @@
     tools:context=".Activities.DirectConnectActivity">
 
     <EditText
+        android:id="@+id/ip_field"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:inputType="number|text"
-        android:ems="10"
-        android:id="@+id/ip_field"
-        android:layout_below="@+id/textView2"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/textView2"
+        android:ems="10"
+        android:inputType="number|text" />
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/enter_server_name"
         android:id="@+id/textView2"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
-    <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/connect"
-        android:id="@+id/button2"
-        android:onClick="onClickConnect"
-        android:layout_below="@+id/ip_field"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:text="@string/enter_server_name" />
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/ip_field"
+        android:onClick="onClickConnect"
+        android:text="@string/connect" />
 </RelativeLayout>

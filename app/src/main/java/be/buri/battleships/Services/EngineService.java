@@ -35,9 +35,13 @@ public abstract class EngineService extends IntentService {
     }
 
     abstract void handleCommand(Command command);
+
     public abstract ConcurrentLinkedQueue getCommandQueue();
+
     public abstract Thread getGameThread();
+
     public abstract void setGameThread(Thread t);
+
     protected abstract void execute();
 
     class CommunicationThread implements Runnable {

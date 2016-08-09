@@ -19,13 +19,13 @@ public class Net {
     @Nullable
     public static Command recieve(InputStream input) throws IOException, ClassNotFoundException {
         ObjectInputStream ois;
-        try{
-             ois = new ObjectInputStream(input);
+        try {
+            ois = new ObjectInputStream(input);
         } catch (EOFException e) {
             return null;
         }
         Command command = (Command) ois.readObject();
-        Log.d("BS.Net.recieve", command.name + " (" + command.arguments.size() + ")");
+        Log.d("BS.Net.receive", command.name + " (" + command.arguments.size() + ")");
         return command;
     }
 

@@ -13,15 +13,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-
-import java.util.List;
-import java.util.Vector;
-
 import be.buri.battleships.Engine.Const;
 import be.buri.battleships.Player;
 import be.buri.battleships.R;
 import be.buri.battleships.Services.ClientService;
-import be.buri.battleships.Units.Harbor;
 
 public class PlayerListActivity extends AppCompatActivity {
 
@@ -47,7 +42,6 @@ public class PlayerListActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-
         if (mBound) {
             unbindService(mConnection);
             mBound = false;
@@ -79,9 +73,6 @@ public class PlayerListActivity extends AppCompatActivity {
     BroadcastReceiver mUpdatePlayerListReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // make harbors as a radio button
-            //clientService.getPlayers();
-
             playerList.clear();
             synchronized (clientService) {
                 synchronized (playerList) {

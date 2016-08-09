@@ -39,5 +39,4 @@
         android:layout_gravity="center_horizontal"
         android:onClick="onClickDirectConnect"
         android:text="@string/direct_connect" />
-
 </LinearLayout>

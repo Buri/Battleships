@@ -80,7 +80,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                     if (unit instanceof Ship && ((Ship) unit).getArrow() != null) {
                         Polyline arrow = ((Ship) unit).getArrow();
                         arrow.setVisible(((Ship) unit).isMoving());
-                        ((Ship) unit).getArrow().setPoints(getLineFromUnit((Ship)unit));
+                        ((Ship) unit).getArrow().setPoints(getLineFromUnit((Ship) unit));
                     }
                 }
             }
@@ -97,17 +97,10 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         mapFragment.getMapAsync(this);
         registerReceiver(mUnitAddReciever, new IntentFilter(Const.BROADCAST_ADD_UNITS));
         registerReceiver(mUnitUpdateReciever, new IntentFilter(Const.BROADCAST_UPDATE_UNITS));
-        /* Code to create a static google map -> it's already saved
-        try {
-            saveImage("http://maps.googleapis.com/maps/api/staticmap?center=56,10.42&zoom=7&size=6500x5000&sensor=false&visual_refresh=true%20&style=feature:water|color:0x00FF00&style=element:labels|visibility:off%20&style=feature:transit|visibility:off%20&style=feature:poi|visibility:off&style=feature:road|visibility:off%20&style=feature:administrative|visibility:off&key=AIzaSyBEVR6YpRzJ6qeTa3se_95mxTCBAxpgyCQ"
-                        , "waterMap.png");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
         // Set the image with a water map
-        ImageView imageView =  new ImageView(this);
+        ImageView imageView = new ImageView(this);
         imageView.setImageResource(R.drawable.watermap_2);
-        waterMap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
+        waterMap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
         waterMap.prepareToDraw();
     }
 
@@ -124,8 +117,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
+     * This is where we can add markers or lines, add listeners or move the camera.
      * If Google Play services is not installed on the device, the user will be prompted to install
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
@@ -176,7 +168,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             for (Harbor harbor : clientService.harbors) {
                 if (harbor.getPlayer() != null) {
                     Log.d("BS.Map.serCon", harbor.toString());
-//                    currentHarbor = harbor;
                     // Add a marker in the players' harbor
                     LatLng harborPosition = new LatLng(harbor.getGpsN(), harbor.getGpsE());
                     Marker marker = mMap.addMarker(new MarkerOptions().position(harborPosition).title(harbor.getName() + " (" + harbor.getPlayer().getName() + ")"));
@@ -215,12 +206,12 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     @Override
     public void onMarkerDragEnd(Marker marker) {
         double[] point = translateCoords(marker.getPosition());
-        if (isWater((int)point[0], (int)point[1])) {
+        if (isWater((int) point[0], (int) point[1])) {
             Log.d("WATER", "is water");
             clientService.orderUnitMovement(marker.getPosition(), clientService.findShipByMarker(marker));
         } else {
             Log.d("WATER", "land");
-            Toast.makeText(this, R.string.invalid_order_target_land, Toast.LENGTH_SHORT).show();;
+            Toast.makeText(this, R.string.invalid_order_target_land, Toast.LENGTH_SHORT).show();
             marker.setPosition(actualLatLng);
         }
         currentlyDraggedMarker = null;
@@ -229,20 +220,18 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
     /**
      * Returns true if the color is for water
+     *
      * @return boolean
      */
     private boolean isWater(int x, int y) {
-        int pixel = waterMap.getPixel(x,y);
-        Log.d("WATER", "pixel (" + x + "," + y + ") " + "RGB(" +Color.red(pixel)+ ", " + Color.green(pixel) + ", " + Color.blue(pixel) + ") " + pixel);
+        int pixel = waterMap.getPixel(x, y);
+        Log.d("WATER", "pixel (" + x + "," + y + ") " + "RGB(" + Color.red(pixel) + ", " + Color.green(pixel) + ", " + Color.blue(pixel) + ") " + pixel);
         // check if the pixel is water
-        if (Color.red(pixel) < 110 && Color.green(pixel) < 110 && Color.blue(pixel) < 110) {
-            return true;
-        }
-        return false;
+        return (Color.red(pixel) < 110 && Color.green(pixel) < 110 && Color.blue(pixel) < 110);
     }
 
     protected double[] translateCoords(LatLng source) {
-        double dy = 640 -(source.latitude - LAT_MIN) / (LAT_MAX - LAT_MIN) * 640,
+        double dy = 640 - (source.latitude - LAT_MIN) / (LAT_MAX - LAT_MIN) * 640,
                 dx = (source.longitude - LON_MIN) / (LON_MAX - LON_MIN) * 640;
         return new double[]{dx, dy};
     }
@@ -265,7 +254,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         marker.setIcon(descriptor);
         unit.setMarker(marker);
 
-        Ship ship = (Ship)unit;
+        Ship ship = (Ship) unit;
         Polyline line = mMap.addPolyline(new PolylineOptions());
         line.setClickable(false);
         line.setPoints(getLineFromUnit(ship));

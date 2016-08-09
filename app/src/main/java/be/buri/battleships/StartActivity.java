@@ -29,7 +29,7 @@ public class StartActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start);
         // Set the image on the start screen
-        ImageView mImageView = (ImageView)findViewById(R.id.imageView);
+        ImageView mImageView = (ImageView) findViewById(R.id.imageView);
         mImageView.setImageResource(R.drawable.seaship);
     }
 
@@ -66,5 +66,4 @@ public class StartActivity extends AppCompatActivity {
         Intent showServerList = new Intent(this, ConnectToServerActivity.class);
         startActivity(showServerList);
     }
-
 }

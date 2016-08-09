@@ -3,5 +3,4 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:onClick="onClickSelectServer"
-    android:textSize="16sp"
-    />
+    android:textSize="16sp" />
