@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
 
 import be.buri.battleships.Activities.ConnectToServerActivity;
 import be.buri.battleships.Activities.HarborListActivity;
@@ -27,6 +28,9 @@ public class StartActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start);
+        // Set the image on the start screen
+        ImageView mImageView = (ImageView)findViewById(R.id.imageView);
+        mImageView.setImageResource(R.drawable.seaship);
     }
 
     @Override
