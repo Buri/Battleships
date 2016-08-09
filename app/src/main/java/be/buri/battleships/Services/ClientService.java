@@ -8,6 +8,9 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ConnectException;
@@ -16,6 +19,8 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -24,6 +29,7 @@ import be.buri.battleships.Engine.Const;
 import be.buri.battleships.Network.Net;
 import be.buri.battleships.Player;
 import be.buri.battleships.Units.Harbor;
+import be.buri.battleships.Units.Ship;
 import be.buri.battleships.Units.Unit;
 
 /**
@@ -35,6 +41,7 @@ public class ClientService extends EngineService {
     public final static int SET_PLAYER_NAME = 2;
     public final static int GET_PLAYER_LIST = 3;
     public final static int REQUEST_NEW_UNIT = 4;
+    public final static int UNIT_ORDER_UPDATE = 5;
     public final static String INTENT_TYPE = "IntentType";
     public final static String HOST_NAME = "HostName";
     public final static String INTENT_SELECT_HARBOR = "SelectHarbor";
@@ -133,6 +140,17 @@ public class ClientService extends EngineService {
                 command.name = Const.CMD_REQUEST_NEW_UNIT;
                 command.arguments.add("Ship");
                 command.playerId = currentPlayer.getId();
+                try {
+                    send(socket.getOutputStream(), command);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case UNIT_ORDER_UPDATE:
+                command.name = Const.CMD_REQUEST_UNIT_ORDER;
+                command.arguments.add(intent.getIntExtra("UNIT_ID", -1));
+                command.arguments.add(intent.getDoubleExtra("LAT", 0));
+                command.arguments.add(intent.getDoubleExtra("LON", 0));
                 try {
                     send(socket.getOutputStream(), command);
                 } catch (IOException e) {
@@ -253,14 +271,18 @@ public class ClientService extends EngineService {
                     }
                 }
                 this.units.put(unit.getId(), unit);
-                Intent intent = new Intent(Const.BROADCAST_UPDATE_UNITS);
+                Intent intent = new Intent(Const.BROADCAST_ADD_UNITS);
                 intent.putExtra("UNIT_ID", unit.getId());
                 sendBroadcast(intent);
             }
             break;
             case Const.CMD_UPDATE_UNIT: {
-                Unit unit = (Unit) command.arguments.get(0);
-                this.units.get(unit.getId()).update(unit);
+                Unit unit = (Unit) command.arguments.get(0), old = this.units.get(unit.getId());
+                old.update(unit);
+                Log.d("BS.Client.updateUnit", Integer.toString(old.getId()) + " (" + Double.toString(old.getGpsN()) + ", " + Double.toString(old.getGpsE()) + ")");
+                Intent intent = new Intent(Const.BROADCAST_UPDATE_UNITS);
+                intent.putExtra("UNIT_ID", unit.getId());
+                sendBroadcast(intent);
             }
             break;
             case Const.CMD_REMOVE_UNIT: {
@@ -303,5 +325,32 @@ public class ClientService extends EngineService {
 
     public static Player getCurrentPlayer() {
         return currentPlayer;
+    }
+
+    public Ship findShipByMarker(Marker marker) {
+        Iterator it = units.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry) it.next();
+            Unit unit = (Unit) pair.getValue();
+            Log.d("BS.Client.FSM", unit.getMarker().getId() + " == " + marker.getId());
+            if (unit.getMarker().getId().equals(marker.getId())) {
+                return (Ship)unit;
+            }
+        }
+        return null;
+    }
+
+    public void orderUnitMovement(LatLng position, Ship unit) {
+        Intent intent = new Intent(this, this.getClass());
+        intent.putExtra(INTENT_TYPE, UNIT_ORDER_UPDATE);
+        intent.putExtra("UNIT_ID", unit.getId());
+        intent.putExtra("LAT", position.latitude);
+        intent.putExtra("LON", position.longitude);
+        startService(intent);
+    }
+
+    @Override
+    protected void execute() {
+        // Noop
     }
 }

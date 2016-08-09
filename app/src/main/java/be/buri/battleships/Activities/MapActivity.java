@@ -7,21 +7,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.media.Image;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -35,19 +28,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Array;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import be.buri.battleships.Engine.Const;
 import be.buri.battleships.R;
@@ -68,13 +50,30 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     private Harbor currentHarbor;
     private Bitmap waterMap;
 
+    private Marker currentlyDraggedMarker;
+
     LatLng actualLatLng;
+
+
+    private BroadcastReceiver mUnitAddReciever = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Unit unit = ClientService.units.get(intent.getIntExtra("UNIT_ID", -1));
+            if (null != unit) {
+                createMarkerForUnit(unit);
+            }
+        }
+    };
 
     private BroadcastReceiver mUnitUpdateReciever = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Unit unit = ClientService.units.get(intent.getIntExtra("UNIT_ID", -1));
-            createMarkerForUnit(unit);
+            if (null != unit) {
+                if (unit.getMarker() != null && unit.getMarker() != currentlyDraggedMarker) {
+                    unit.getMarker().setPosition(new LatLng(unit.getGpsN(), unit.getGpsE()));
+                }
+            }
         }
     };
 
@@ -86,6 +85,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        registerReceiver(mUnitAddReciever, new IntentFilter(Const.BROADCAST_ADD_UNITS));
         registerReceiver(mUnitUpdateReciever, new IntentFilter(Const.BROADCAST_UPDATE_UNITS));
         /* Code to create a static google map -> it's already saved
         try {
@@ -96,8 +96,9 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         }*/
         // Set the image with a water map
         ImageView imageView =  new ImageView(this);
-        imageView.setImageResource(R.drawable.watermap);
+        imageView.setImageResource(R.drawable.watermap_2);
         waterMap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
+        waterMap.prepareToDraw();
     }
 
     @Override
@@ -107,6 +108,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             unbindService(mConnection);
         }
         unregisterReceiver(mUnitUpdateReciever);
+        unregisterReceiver(mUnitAddReciever);
     }
 
     /**
@@ -191,6 +193,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
     @Override
     public void onMarkerDragStart(Marker marker) {
+        currentlyDraggedMarker = marker;
         actualLatLng = marker.getPosition();
     }
 
@@ -204,10 +207,13 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         double[] point = translateCoords(marker.getPosition());
         if (isWater((int)point[0], (int)point[1])) {
             Log.d("WATER", "is water");
+            clientService.orderUnitMovement(marker.getPosition(), clientService.findShipByMarker(marker));
         } else {
             Log.d("WATER", "land");
-            //marker.setPosition(actualLatLng);
+            marker.setPosition(actualLatLng);
         }
+        currentlyDraggedMarker = null;
+        actualLatLng = null;
     }
 
     /**
@@ -216,7 +222,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
      */
     private boolean isWater(int x, int y) {
         int pixel = waterMap.getPixel(x,y);
-        Log.d("WATER", "pixel " + "RGB(" +Color.red(pixel)+ ", " + Color.green(pixel) + ", " + Color.blue(pixel) + ")");
+        Log.d("WATER", "pixel (" + x + "," + y + ") " + "RGB(" +Color.red(pixel)+ ", " + Color.green(pixel) + ", " + Color.blue(pixel) + ") " + pixel);
         // check if the pixel is water
         if (Color.red(pixel) < 110 && Color.green(pixel) < 110 && Color.blue(pixel) < 110) {
             return true;
@@ -227,7 +233,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     protected double[] translateCoords(LatLng source) {
         double dy = 640 -(source.latitude - LAT_MIN) / (LAT_MAX - LAT_MIN) * 640,
                 dx = (source.longitude - LON_MIN) / (LON_MAX - LON_MIN) * 640;
-        Log.d("WATER", "coords "+ dx + " " + dy );
         return new double[]{dx, dy};
     }
 
@@ -235,7 +240,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     public void onMapLoaded() {
         Iterator it = ClientService.units.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry pair = (Map.Entry) it.next();
             createMarkerForUnit((Unit) pair.getValue());
         }
     }
@@ -247,5 +252,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         marker.setDraggable(true);
         BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.ship3b);
         marker.setIcon(descriptor);
+        unit.setMarker(marker);
     }
 }

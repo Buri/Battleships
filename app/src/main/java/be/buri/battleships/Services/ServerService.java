@@ -6,31 +6,23 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
-import java.util.Dictionary;
-import java.util.Enumeration;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import be.buri.battleships.Activities.MapActivity;
 import be.buri.battleships.Engine.Command;
 import be.buri.battleships.Engine.Const;
 import be.buri.battleships.Network.Net;
 import be.buri.battleships.Player;
 import be.buri.battleships.Units.Harbor;
+import be.buri.battleships.Units.Ship;
 import be.buri.battleships.Units.Unit;
 
 /**
@@ -40,7 +32,7 @@ public class ServerService extends EngineService {
     private ServerSocket serverSocket;
     private Thread serverThread = null;
     public static final int SERVERPORT = 6000;
-    public Map<Player, Socket> playerSocketMap = new HashMap<Player, Socket>();
+    public static Map<Integer, Socket> playerSocketMap = Collections.synchronizedMap(new HashMap<Integer, Socket>());
     protected static ConcurrentLinkedQueue incomingCommands = new ConcurrentLinkedQueue();
     protected static Thread gameThread = null;
 
@@ -86,7 +78,7 @@ public class ServerService extends EngineService {
                     new Thread(commThread).start();
                     Player newPlayer = new Player(++counter);
                     service.players.add(newPlayer);
-                    playerSocketMap.put(newPlayer, socket);
+                    service.playerSocketMap.put(newPlayer.getId(), socket);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -101,7 +93,7 @@ public class ServerService extends EngineService {
             response.arguments.add(this.players);
             for (Player player : this.players) {
                 Log.d("BS.Server.listPlayers", player.getName() + (player.getHarbor() != null ? " / " + player.getHarbor().getName() : ""));
-                if (playerSocketMap.get(player) == command.socket) {
+                if (playerSocketMap.get(player.getId()) == command.socket) {
                     Log.d("BS.Server.listPlayers", "Current player: " + player.getName());
                     response.arguments.add(player.getId());
                 }
@@ -132,9 +124,9 @@ public class ServerService extends EngineService {
 
     private void handleDisconnect(Command command) {
         for (Player player : players) {
-            if (command.socket == playerSocketMap.get(player)) {
+            if (command.socket == playerSocketMap.get(player.getId())) {
                 players.remove(player);
-                playerSocketMap.remove(player);
+                playerSocketMap.remove(player.getId());
                 break;
             }
         }
@@ -166,7 +158,7 @@ public class ServerService extends EngineService {
                 break;
             case Const.CMD_SET_PLAYER_NAME:
                 for (Player player : players) {
-                    if (playerSocketMap.get(player) == command.socket) {
+                    if (playerSocketMap.get(player.getId()) == command.socket) {
                         player.setName((String) command.arguments.get(0));
                         for (Harbor harbor : harbors) {
                             if (harbor.getName().equals((String) command.arguments.get(1))) {
@@ -182,26 +174,32 @@ public class ServerService extends EngineService {
             case Const.CMD_REQUEST_NEW_UNIT:
                 handleRequestNewUnit(command);
                 break;
+            case Const.CMD_REQUEST_UNIT_ORDER:
+                Ship unit = ((Ship)units.get((int)command.arguments.get(0)));
+                unit.setDestLat((double)command.arguments.get(1));
+                unit.setDestLon((double)command.arguments.get(2));
+                break;
         }
     }
 
     private void handleRequestNewUnit(Command command) {
         Command response = new Command();
-        Unit unit = new Unit();
+        Ship unit = new Ship();
         Player player = findPlayerById(command.playerId);
+        if (player.getUnitCount() >= 5) {
+            return;
+        }
         unit.setPlayer(player);
         Harbor harbor = player.getHarbor();
         unit.setGpsE(harbor.getGpsE());
         unit.setGpsN(harbor.getGpsN());
+        //unit.setDestLat((MapActivity.LAT_MIN + MapActivity.LAT_MAX) / 2);
+        //unit.setDestLon((MapActivity.LON_MIN + MapActivity.LON_MAX) / 2);
         units.put(unit.getId(), unit);
         response.name = Const.CMD_ADD_UNIT;
         response.arguments.add(unit);
         response.arguments.add(unit.getPlayer().getId());
-        try {
-            Net.respond(command, response);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        netBroadcast(response);
     }
 
     @Override
@@ -222,13 +220,34 @@ public class ServerService extends EngineService {
     private void broadcastPlayerList() {
         Command command = new Command();
         for (Player player : players) {
-            command.socket = playerSocketMap.get(player);
+            command.socket = playerSocketMap.get(player.getId());
             if (null != command.socket && !command.socket.isClosed()) {
                 handleListPlayers(command);
             }
         }
     }
 
+    public void broadcastUnitUpdate(Unit unit) {
+        Command command = new Command();
+        command.name = Const.CMD_UPDATE_UNIT;
+        command.arguments.add(unit);
+        netBroadcast(command);
+    }
+
+    private void netBroadcast(Command command) {
+        Iterator it = playerSocketMap.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry) it.next();
+            Socket socket = ((Socket) pair.getValue());
+            try {
+                if (null != socket) {
+                    Net.send(socket.getOutputStream(), command);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     protected Player findPlayerById(int i) {
         for (Player player : players) {
@@ -238,12 +257,22 @@ public class ServerService extends EngineService {
         }
         return null;
     }
-    protected Player findPlayerBySocket(Socket socket) {
-        for (Player player : players) {
-            if (playerSocketMap.get(player) == socket) {
-                return player;
+
+    @Override
+    protected void execute() {
+        // Move units
+        //Log.i("BS.Server.execute", "Running execute");
+        Iterator it = units.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry) it.next();
+            Unit unit = (Unit) pair.getValue();
+            if (unit instanceof Ship) {
+                if (((Ship) unit).isMoving()) {
+                    ((Ship) unit).move(FPS);
+                    Log.d("BS.Server.execute", Integer.toString(unit.getId()) + " (" + Double.toString(unit.getGpsN()) + ", " + Double.toString(unit.getGpsE()) + ")");
+                    broadcastUnitUpdate(unit);
+                }
             }
         }
-        return null;
     }
 }

@@ -57,6 +57,10 @@ public class Player implements Serializable {
         return units.contains(unit);
     }
 
+    public int getUnitCount() {
+        return units.size();
+    }
+
     public String getName() {
         return name;
     }

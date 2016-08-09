@@ -25,7 +25,7 @@ public abstract class EngineService extends IntentService {
      * Players: beta version with only 2 players
      */
     public static boolean running = false;
-    public static final int FPS = 3;
+    public static final int FPS = 10;
     public static Vector<Player> players = new Vector<Player>(2);
     public static Vector<Harbor> harbors = Const.getHarbors();
     public static Map<Integer, Unit> units = Collections.synchronizedMap(new HashMap<Integer, Unit>(16));
@@ -38,6 +38,7 @@ public abstract class EngineService extends IntentService {
     public abstract ConcurrentLinkedQueue getCommandQueue();
     public abstract Thread getGameThread();
     public abstract void setGameThread(Thread t);
+    protected abstract void execute();
 
     class CommunicationThread implements Runnable {
         final EngineService service;
@@ -88,6 +89,7 @@ public abstract class EngineService extends IntentService {
                     Command command = (Command) this.service.getCommandQueue().poll();
                     handleCommand(command);
                 }
+                execute();
                 // End loop code here
 
                 long end_time = System.nanoTime();

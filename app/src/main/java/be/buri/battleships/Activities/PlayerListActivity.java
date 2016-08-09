@@ -84,8 +84,12 @@ public class PlayerListActivity extends AppCompatActivity {
             //clientService.getPlayers();
 
             playerList.clear();
-            for (Player player : clientService.players) {
-                playerList.add(player.getName() + "\n" + player.getHarbor().getName());
+            synchronized (clientService) {
+                synchronized (playerList) {
+                    for (Player player : clientService.players) {
+                        playerList.add(player.getName() + "\n" + player.getHarbor().getName());
+                    }
+                }
             }
             Log.d("BS.UI.updatePlayerList", Integer.toString(clientService.players.size()));
         }

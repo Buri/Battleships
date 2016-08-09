@@ -17,9 +17,11 @@ public class Const {
     public final static String CMD_UPDATE_UNIT = "UPDATE_UNIT";
     public final static String CMD_REMOVE_UNIT = "REMOVE_UNIT";
     public final static String CMD_REQUEST_NEW_UNIT = "REQUEST_NEW_UNIT";
+    public final static String CMD_REQUEST_UNIT_ORDER = "CMD_REQUEST_UNIT_ORDER";
 
 
     public static final String BROADCAST_UPDATE_PLAYER_LIST = "BROADCAST_UPDATE_PLAYER_LIST";
+    public static final String BROADCAST_ADD_UNITS = "BROADCAST_ADD_UNITS";
     public static final String BROADCAST_UPDATE_UNITS = "BROADCAST_UPDATE_UNITS";
 
 

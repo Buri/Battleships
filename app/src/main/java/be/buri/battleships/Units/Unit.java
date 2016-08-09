@@ -20,7 +20,7 @@ public class Unit implements Serializable {
     protected Player player;
     protected double gpsN;
     protected double gpsE;
-    protected Marker marker;
+    protected transient Marker marker;
 
     public Unit() {
         id = unitCount++;
