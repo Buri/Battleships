@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -18,10 +19,8 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import be.buri.battleships.Activities.HarborListActivity;
 import be.buri.battleships.Engine.Command;
 import be.buri.battleships.Engine.Const;
-import be.buri.battleships.Network.Helper;
 import be.buri.battleships.Network.Net;
 import be.buri.battleships.Player;
 import be.buri.battleships.Units.Harbor;
@@ -95,7 +94,7 @@ public class ClientService extends EngineService {
                         new Thread(commThread).start();
                         Command serverCheck = new Command();
                         serverCheck.name = Const.CMD_IS_WARSHIPS;
-                        Net.send(socket.getOutputStream(), serverCheck);
+                        send(socket.getOutputStream(), serverCheck);
                         sendBroadcast(new Intent(INTENT_SELECT_HARBOR));
                     }
                 } catch (IOException e) {
@@ -117,7 +116,7 @@ public class ClientService extends EngineService {
                 command.arguments.add(currentPlayer.getName());
                 command.arguments.add(currentPlayer.getHarbor().getName());
                 try {
-                    Net.send(socket.getOutputStream(), command);
+                    send(socket.getOutputStream(), command);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -125,7 +124,7 @@ public class ClientService extends EngineService {
             case GET_PLAYER_LIST:
                 command.name = Const.CMD_LIST_PLAYERS;
                 try {
-                    Net.send(socket.getOutputStream(), command);
+                    send(socket.getOutputStream(), command);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -133,8 +132,9 @@ public class ClientService extends EngineService {
             case REQUEST_NEW_UNIT:
                 command.name = Const.CMD_REQUEST_NEW_UNIT;
                 command.arguments.add("Ship");
+                command.playerId = currentPlayer.getId();
                 try {
-                    Net.send(socket.getOutputStream(), command);
+                    send(socket.getOutputStream(), command);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -253,6 +253,9 @@ public class ClientService extends EngineService {
                     }
                 }
                 this.units.put(unit.getId(), unit);
+                Intent intent = new Intent(Const.BROADCAST_UPDATE_UNITS);
+                intent.putExtra("UNIT_ID", unit.getId());
+                sendBroadcast(intent);
             }
             break;
             case Const.CMD_UPDATE_UNIT: {
@@ -289,5 +292,16 @@ public class ClientService extends EngineService {
         intent.putExtra(INTENT_TYPE, REQUEST_NEW_UNIT);
         intent.putExtra("UNIT_TYPE", unit);
         startService(intent);
+    }
+
+    public void send(OutputStream stream, Command command) {
+        if (null != currentPlayer) {
+            command.playerId = currentPlayer.getId();
+        }
+        Net.send(stream, command);
+    }
+
+    public static Player getCurrentPlayer() {
+        return currentPlayer;
     }
 }

@@ -11,4 +11,5 @@ public class Command  implements Serializable{
     public String name;
     public ArrayList<Object> arguments = new ArrayList<Object>();
     public Socket socket;
+    public int playerId;
 }
