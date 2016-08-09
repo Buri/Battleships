@@ -14,11 +14,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import be.buri.battleships.Activities.MapActivity;
 import be.buri.battleships.Engine.Command;
 import be.buri.battleships.Engine.Const;
+import be.buri.battleships.Network.Helper;
 import be.buri.battleships.Network.Net;
 import be.buri.battleships.Player;
 import be.buri.battleships.Units.Harbor;
@@ -77,6 +79,7 @@ public class ServerService extends EngineService {
                     CommunicationThread commThread = new CommunicationThread(socket, service);
                     new Thread(commThread).start();
                     Player newPlayer = new Player(++counter);
+                    newPlayer.setColor(Helper.getRandomColor());
                     service.players.add(newPlayer);
                     service.playerSocketMap.put(newPlayer.getId(), socket);
                 } catch (IOException e) {
@@ -182,19 +185,22 @@ public class ServerService extends EngineService {
         }
     }
 
+    Random mRand = new Random();
+
     private void handleRequestNewUnit(Command command) {
         Command response = new Command();
         Ship unit = new Ship();
         Player player = findPlayerById(command.playerId);
-        if (player.getUnitCount() >= 5) {
+        // Limit to 5 ships+
+        if (player.getUnitCount() >= 7) {
             return;
         }
         unit.setPlayer(player);
         Harbor harbor = player.getHarbor();
         unit.setGpsE(harbor.getGpsE());
         unit.setGpsN(harbor.getGpsN());
-        //unit.setDestLat((MapActivity.LAT_MIN + MapActivity.LAT_MAX) / 2);
-        //unit.setDestLon((MapActivity.LON_MIN + MapActivity.LON_MAX) / 2);
+        unit.setDestLat(mRand.nextDouble()*(MapActivity.LAT_MAX - MapActivity.LAT_MIN)+MapActivity.LAT_MIN);
+        unit.setDestLon(mRand.nextDouble()*(MapActivity.LON_MAX - MapActivity.LON_MIN)+MapActivity.LON_MIN);
         units.put(unit.getId(), unit);
         response.name = Const.CMD_ADD_UNIT;
         response.arguments.add(unit);

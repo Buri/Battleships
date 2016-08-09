@@ -1,5 +1,7 @@
 package be.buri.battleships;
 
+import android.graphics.Color;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -17,6 +19,7 @@ public class Player implements Serializable {
     private boolean connected = false;
     private String name;
     private int id;
+    private int color = Color.GREEN;
     transient private ArrayList<Unit> units = new ArrayList<Unit>();
     private Harbor harbor;
 
@@ -91,5 +94,13 @@ public class Player implements Serializable {
     {
         stream.defaultReadObject();
         units = new ArrayList<>();
+    }
+
+    public int getColor() {
+        return color;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
     }
 }

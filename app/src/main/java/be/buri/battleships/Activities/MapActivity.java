@@ -28,7 +28,10 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -36,6 +39,7 @@ import be.buri.battleships.Engine.Const;
 import be.buri.battleships.R;
 import be.buri.battleships.Services.ClientService;
 import be.buri.battleships.Units.Harbor;
+import be.buri.battleships.Units.Ship;
 import be.buri.battleships.Units.Unit;
 
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnCameraChangeListener, GoogleMap.OnMarkerDragListener, GoogleMap.OnMapLoadedCallback {
@@ -73,6 +77,11 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             if (null != unit) {
                 if (unit.getMarker() != null && unit.getMarker() != currentlyDraggedMarker) {
                     unit.getMarker().setPosition(new LatLng(unit.getGpsN(), unit.getGpsE()));
+                    if (unit instanceof Ship && ((Ship) unit).getArrow() != null) {
+                        Polyline arrow = ((Ship) unit).getArrow();
+                        arrow.setVisible(((Ship) unit).isMoving());
+                        ((Ship) unit).getArrow().setPoints(getLineFromUnit((Ship)unit));
+                    }
                 }
             }
         }
@@ -174,7 +183,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                     marker.setFlat(true);
                     BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.harbor);
                     marker.setIcon(descriptor);
-                    mMap.addCircle(new CircleOptions().center(harborPosition).radius(8000).clickable(false).fillColor(Color.RED).strokeWidth(0));
+                    mMap.addCircle(new CircleOptions().center(harborPosition).radius(8000).clickable(false).fillColor(harbor.getPlayer().getColor()).strokeWidth(0));
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(harborPosition, 8));
                 }
             }
@@ -255,5 +264,19 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.ship3b);
         marker.setIcon(descriptor);
         unit.setMarker(marker);
+
+        Ship ship = (Ship)unit;
+        Polyline line = mMap.addPolyline(new PolylineOptions());
+        line.setClickable(false);
+        line.setPoints(getLineFromUnit(ship));
+        line.setColor(unit.getPlayer().getColor());
+        ship.setArrow(line);
+    }
+
+    private ArrayList<LatLng> getLineFromUnit(Ship ship) {
+        ArrayList<LatLng> points = new ArrayList<LatLng>(2);
+        points.add(new LatLng(ship.getGpsN(), ship.getGpsE()));
+        points.add(new LatLng(ship.getDestLat(), ship.getDestLon()));
+        return points;
     }
 }

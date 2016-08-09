@@ -1,10 +1,21 @@
 package be.buri.battleships.Units;
 
+import com.google.android.gms.maps.model.Polyline;
+
 /**
  * Created by buri on 9.8.16.
  */
 public class Ship extends Unit {
     private double speed = 0.075d, destLat = 0, destLon = 0;
+    transient private Polyline arrow;
+
+    public Polyline getArrow() {
+        return arrow;
+    }
+
+    public void setArrow(Polyline arrow) {
+        this.arrow = arrow;
+    }
 
     public double getSpeed() {
         return speed;
@@ -32,13 +43,13 @@ public class Ship extends Unit {
 
     public void move(int fps) {
         if (destLat != 0 && destLon != 0) {
-            double dy    = destLat-gpsN, dx = destLon-gpsE;
+            double dy = destLat - gpsN, dx = destLon - gpsE;
 
-            double distance = Math.hypot(destLat-gpsN, destLon-gpsE);
-            if (distance > speed/fps) {
+            double distance = Math.hypot(destLat - gpsN, destLon - gpsE);
+            if (distance > speed / fps) {
                 double direction = Math.atan2(dx, dy);
-                gpsN += speed/fps * Math.cos(direction);
-                gpsE += speed/fps * Math.sin(direction);
+                gpsN += speed / fps * Math.cos(direction);
+                gpsE += speed / fps * Math.sin(direction);
             } else {
                 gpsN = destLat;
                 gpsE = destLon;
@@ -55,7 +66,7 @@ public class Ship extends Unit {
     @Override
     public void update(Unit u) {
         super.update(u);
-        updateOrders((Ship)u);
+        updateOrders((Ship) u);
     }
 
     public void updateOrders(Ship to) {
