@@ -186,7 +186,6 @@ public class ClientService extends EngineService {
             }
         }
         Intent intent = new Intent(Const.BROADCAST_UPDATE_PLAYER_LIST);
-        intent.setType("text/plain");
         for (Harbor harbor : harbors) {
             Log.d("BS.Client.hListPlayer", harbor.getName() + " " + (harbor.getPlayer() != null ? harbor.getPlayer().getName() : "---"));
         }
@@ -198,7 +197,8 @@ public class ClientService extends EngineService {
         WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         int ip = wifiInfo.getIpAddress();
-        for (int i = 125; i < 132; i++) {
+        // Skipping 0 and 255 as they have special meaning on network
+        for (int i = 1; i < 255; i++) {
             String ipString = String.format(
                     "%d.%d.%d.%d",
                     (ip & 0xff),

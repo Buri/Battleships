@@ -41,7 +41,7 @@ public class PlayerListActivity extends AppCompatActivity {
         ListView playerListView = (ListView) findViewById(R.id.playerList);
         playerListView.setAdapter(playerList);
 
-        registerReceiver(mUpdatePlayerListReceiver, IntentFilter.create(Const.BROADCAST_UPDATE_PLAYER_LIST, "text/plain"));
+        registerReceiver(mUpdatePlayerListReceiver, new IntentFilter(Const.BROADCAST_UPDATE_PLAYER_LIST));
     }
 
     @Override
@@ -52,7 +52,6 @@ public class PlayerListActivity extends AppCompatActivity {
             unbindService(mConnection);
             mBound = false;
         }
-
         unregisterReceiver(mUpdatePlayerListReceiver);
     }
 
